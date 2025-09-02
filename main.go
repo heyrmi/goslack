@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/heyrmi/goslack/api"
+	db "github.com/heyrmi/goslack/db/sqlc"
+	"github.com/heyrmi/goslack/util"
 	_ "github.com/lib/pq"
-	"github.com/rahulmishra/goslack/api"
-	db "github.com/rahulmishra/goslack/db/sqlc"
-	"github.com/rahulmishra/goslack/util"
 )
 
 func main() {

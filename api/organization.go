@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/heyrmi/goslack/service"
 	"github.com/lib/pq"
-	"github.com/rahulmishra/goslack/service"
 )
 
 // createOrganization creates a new organization

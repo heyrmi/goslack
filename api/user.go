@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/heyrmi/goslack/service"
+	"github.com/heyrmi/goslack/token"
 	"github.com/lib/pq"
-	"github.com/rahulmishra/goslack/service"
-	"github.com/rahulmishra/goslack/token"
 )
 
 // createUser creates a new user

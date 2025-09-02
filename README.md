@@ -1,7 +1,6 @@
 # GoSlack - Slack-like Backend Application
 
-[![Tests](https://github.com/rahulmishra/goslack/actions/workflows/test.yml/badge.svg)](https://github.com/rahulmishra/goslack/actions/workflows/test.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/rahulmishra/goslack)](https://goreportcard.com/report/github.com/rahulmishra/goslack)
+[![Run unit tests](https://github.com/heyrmi/goslack/actions/workflows/test.yml/badge.svg)](https://github.com/heyrmi/goslack/actions/workflows/test.yml)
 
 A Slack-like backend application built with Go, following clean architecture principles and inspired by the [simplebank](https://github.com/techschool/simplebank) project structure.
 
@@ -138,7 +137,7 @@ Authorization: Bearer <your-token>
 # Run all tests
 make test
 
-# Run database-specific tests only  
+# Run database-specific tests only
 make dbtest
 
 # Run tests with coverage
@@ -257,7 +256,7 @@ The project includes comprehensive unit tests with mocked dependencies:
 ### Test Coverage
 
 - API Layer: 32% coverage
-- Database Layer: 74.7% coverage  
+- Database Layer: 74.7% coverage
 - Token Layer: 84% coverage
 - Utility Layer: 36.7% coverage
 
@@ -268,7 +267,7 @@ The project uses GitHub Actions for automated testing:
 - **Triggers**: Push to `main` branch and pull requests
 - **Environment**: Ubuntu latest with PostgreSQL 17
 - **Steps**: Code generation, migrations, mock generation, and full test suite
-- **Status**: ![Tests](https://github.com/rahulmishra/goslack/actions/workflows/test.yml/badge.svg)
+- **Status**: ![Tests](https://github.com/heyrmi/goslack/actions/workflows/test.yml/badge.svg)
 
 ## Architecture
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rahulmishra/goslack/util"
+	"github.com/heyrmi/goslack/util"
 	"github.com/stretchr/testify/require"
 )
 

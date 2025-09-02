@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	db "github.com/rahulmishra/goslack/db/sqlc"
-	"github.com/rahulmishra/goslack/token"
-	"github.com/rahulmishra/goslack/util"
+	db "github.com/heyrmi/goslack/db/sqlc"
+	"github.com/heyrmi/goslack/token"
+	"github.com/heyrmi/goslack/util"
 )
 
 // UserService handles user-related business logic

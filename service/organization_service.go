@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	db "github.com/rahulmishra/goslack/db/sqlc"
+	db "github.com/heyrmi/goslack/db/sqlc"
 )
 
 // OrganizationService handles organization-related business logic

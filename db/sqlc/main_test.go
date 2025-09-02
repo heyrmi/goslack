@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/heyrmi/goslack/util"
 	_ "github.com/lib/pq"
-	"github.com/rahulmishra/goslack/util"
 )
 
 var testQueries *Queries

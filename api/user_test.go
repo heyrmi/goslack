@@ -12,11 +12,11 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	mockdb "github.com/rahulmishra/goslack/db/mock"
-	db "github.com/rahulmishra/goslack/db/sqlc"
-	"github.com/rahulmishra/goslack/service"
-	"github.com/rahulmishra/goslack/token"
-	"github.com/rahulmishra/goslack/util"
+	mockdb "github.com/heyrmi/goslack/db/mock"
+	db "github.com/heyrmi/goslack/db/sqlc"
+	"github.com/heyrmi/goslack/service"
+	"github.com/heyrmi/goslack/token"
+	"github.com/heyrmi/goslack/util"
 	"github.com/stretchr/testify/require"
 )
 

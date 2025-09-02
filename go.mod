@@ -1,4 +1,4 @@
-module github.com/rahulmishra/goslack
+module github.com/heyrmi/goslack
 
 go 1.25
 
