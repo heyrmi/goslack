@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: goslack_postgres
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: goslack
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - goslack
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goslack_api
+    ports:
+      - "8080:8080"
+    environment:
+      DB_SOURCE: postgresql://root:secret@postgres:5432/goslack?sslmode=disable
+    depends_on:
+      - postgres
+    networks:
+      - goslack
+    command: ["/app/wait-for.sh", "postgres:5432", "--", "/app/main"]
+
+networks:
+  goslack:
+    driver: bridge
+
+volumes:
+  postgres_data:
