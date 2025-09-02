@@ -16,7 +16,6 @@ go.work
 
 # Environment variables
 .env
-app.env
 
 # Database
 *.db
