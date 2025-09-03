@@ -44,3 +44,29 @@ RETURNING *;
 -- name: DeleteUser :exec
 DELETE FROM users
 WHERE id = $1;
+
+-- name: UpdateUserRole :one
+UPDATE users
+SET role = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateUserWorkspace :one
+UPDATE users
+SET 
+    workspace_id = $2,
+    role = $3
+WHERE id = $1
+RETURNING *;
+
+-- name: GetUsersByWorkspace :many
+SELECT * FROM users
+WHERE workspace_id = $1
+ORDER BY created_at ASC
+LIMIT $2
+OFFSET $3;
+
+-- name: CheckUserWorkspaceRole :one
+SELECT role FROM users
+WHERE id = $1 AND workspace_id = $2
+LIMIT 1;

@@ -58,3 +58,8 @@ func RandomOrganizationName() string {
 	organizations := []string{"Tech Corp", "Innovation Inc", "Digital Solutions", "Future Systems", "Smart Tech"}
 	return organizations[rand.Intn(len(organizations))]
 }
+
+// RandomBool generates a random boolean value
+func RandomBool() bool {
+	return rand.Intn(2) == 1
+}

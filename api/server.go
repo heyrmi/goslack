@@ -10,7 +10,7 @@ import (
 	"github.com/heyrmi/goslack/util"
 )
 
-// Server serves HTTP requests for our banking service.
+// Server serves HTTP requests for our GoSlack service.
 type Server struct {
 	config              util.Config
 	store               db.Store
@@ -18,6 +18,8 @@ type Server struct {
 	router              *gin.Engine
 	userService         *service.UserService
 	organizationService *service.OrganizationService
+	workspaceService    *service.WorkspaceService
+	channelService      *service.ChannelService
 }
 
 // NewServer creates a new HTTP server and set up routing.
@@ -29,6 +31,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 	userService := service.NewUserService(store, tokenMaker, config)
 	organizationService := service.NewOrganizationService(store)
+	workspaceService := service.NewWorkspaceService(store, userService)
+	channelService := service.NewChannelService(store, userService, workspaceService)
 
 	server := &Server{
 		config:              config,
@@ -36,6 +40,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		tokenMaker:          tokenMaker,
 		userService:         userService,
 		organizationService: organizationService,
+		workspaceService:    workspaceService,
+		channelService:      channelService,
 	}
 
 	server.setupRouter()
@@ -60,6 +66,30 @@ func (server *Server) setupRouter() {
 	authRoutes.GET("/users", server.listUsers)
 	authRoutes.PUT("/organizations/:id", server.updateOrganization)
 	authRoutes.DELETE("/organizations/:id", server.deleteOrganization)
+
+	// Protected routes with user context
+	authWithUserRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService))
+
+	// Workspace routes (no workspace-specific auth needed)
+	authWithUserRoutes.POST("/workspaces", server.createWorkspace)
+	authWithUserRoutes.GET("/workspaces", server.listWorkspaces)
+	authWithUserRoutes.GET("/workspaces/:id", server.getWorkspace)
+
+	// Workspace admin routes (require admin of the workspace)
+	authWithUserRoutes.PUT("/workspaces/:id", requireWorkspaceAdmin(server.userService), server.updateWorkspace)
+	authWithUserRoutes.DELETE("/workspaces/:id", requireWorkspaceAdmin(server.userService), server.deleteWorkspace)
+
+	// Workspace member routes (require membership of the workspace)
+	authWithUserRoutes.POST("/workspaces/:id/channels", requireWorkspaceMember(server.userService), server.createChannel)
+	authWithUserRoutes.GET("/workspaces/:id/channels", requireWorkspaceMember(server.userService), server.listChannels)
+
+	// Channel routes (with individual access checks)
+	authWithUserRoutes.GET("/channels/:id", server.getChannel)
+	authWithUserRoutes.PUT("/channels/:id", server.updateChannel)
+	authWithUserRoutes.DELETE("/channels/:id", server.deleteChannel)
+
+	// User role management (admin only, same workspace)
+	authWithUserRoutes.PATCH("/users/:user_id/role", requireSameWorkspaceForUserRole(server.userService), server.updateUserRole)
 
 	server.router = router
 }

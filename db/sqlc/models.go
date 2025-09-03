@@ -5,8 +5,18 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
+
+type Channel struct {
+	ID          int64     `json:"id"`
+	WorkspaceID int64     `json:"workspace_id"`
+	Name        string    `json:"name"`
+	IsPrivate   bool      `json:"is_private"`
+	CreatedBy   int64     `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+}
 
 type Organization struct {
 	ID        int64     `json:"id"`
@@ -15,12 +25,21 @@ type Organization struct {
 }
 
 type User struct {
-	ID                int64     `json:"id"`
-	OrganizationID    int64     `json:"organization_id"`
-	Email             string    `json:"email"`
-	FirstName         string    `json:"first_name"`
-	LastName          string    `json:"last_name"`
-	HashedPassword    string    `json:"hashed_password"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                int64         `json:"id"`
+	OrganizationID    int64         `json:"organization_id"`
+	Email             string        `json:"email"`
+	FirstName         string        `json:"first_name"`
+	LastName          string        `json:"last_name"`
+	HashedPassword    string        `json:"hashed_password"`
+	PasswordChangedAt time.Time     `json:"password_changed_at"`
+	CreatedAt         time.Time     `json:"created_at"`
+	WorkspaceID       sql.NullInt64 `json:"workspace_id"`
+	Role              string        `json:"role"`
+}
+
+type Workspace struct {
+	ID             int64     `json:"id"`
+	OrganizationID int64     `json:"organization_id"`
+	Name           string    `json:"name"`
+	CreatedAt      time.Time `json:"created_at"`
 }

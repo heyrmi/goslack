@@ -189,14 +189,102 @@ func (s *UserService) ListUsers(ctx context.Context, organizationID int64, limit
 	return userResponses, nil
 }
 
+// UpdateUserRole updates a user's role in their workspace
+func (s *UserService) UpdateUserRole(ctx context.Context, userID int64, role string) (UserResponse, error) {
+	arg := db.UpdateUserRoleParams{
+		ID:   userID,
+		Role: role,
+	}
+
+	user, err := s.store.UpdateUserRole(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return UserResponse{}, errors.New("user not found")
+		}
+		return UserResponse{}, fmt.Errorf("failed to update user role: %w", err)
+	}
+
+	return s.toUserResponse(user), nil
+}
+
+// AssignUserToWorkspace assigns a user to a workspace with a specific role
+func (s *UserService) AssignUserToWorkspace(ctx context.Context, userID, workspaceID int64, role string) (UserResponse, error) {
+	arg := db.UpdateUserWorkspaceParams{
+		ID:          userID,
+		WorkspaceID: sql.NullInt64{Int64: workspaceID, Valid: true},
+		Role:        role,
+	}
+
+	user, err := s.store.UpdateUserWorkspace(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return UserResponse{}, errors.New("user not found")
+		}
+		return UserResponse{}, fmt.Errorf("failed to assign user to workspace: %w", err)
+	}
+
+	return s.toUserResponse(user), nil
+}
+
+// CheckUserWorkspaceRole checks if a user has a specific role in a workspace
+func (s *UserService) CheckUserWorkspaceRole(ctx context.Context, userID, workspaceID int64) (string, error) {
+	arg := db.CheckUserWorkspaceRoleParams{
+		ID:          userID,
+		WorkspaceID: sql.NullInt64{Int64: workspaceID, Valid: true},
+	}
+
+	role, err := s.store.CheckUserWorkspaceRole(ctx, arg)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", errors.New("user not found in workspace")
+		}
+		return "", fmt.Errorf("failed to check user role: %w", err)
+	}
+
+	return role, nil
+}
+
+// IsWorkspaceAdmin checks if a user is an admin in a workspace
+func (s *UserService) IsWorkspaceAdmin(ctx context.Context, userID, workspaceID int64) (bool, error) {
+	role, err := s.CheckUserWorkspaceRole(ctx, userID, workspaceID)
+	if err != nil {
+		// If user not found in workspace, they're not an admin
+		if err.Error() == "user not found in workspace" {
+			return false, nil
+		}
+		return false, err
+	}
+	return role == "admin", nil
+}
+
+// IsWorkspaceMember checks if a user is a member (admin or member) in a workspace
+func (s *UserService) IsWorkspaceMember(ctx context.Context, userID, workspaceID int64) (bool, error) {
+	role, err := s.CheckUserWorkspaceRole(ctx, userID, workspaceID)
+	if err != nil {
+		// If user not found in workspace, they're not a member
+		if err.Error() == "user not found in workspace" {
+			return false, nil
+		}
+		return false, err
+	}
+	return role == "admin" || role == "member", nil
+}
+
 // toUserResponse converts a db.User to UserResponse (removes sensitive data)
 func (s *UserService) toUserResponse(user db.User) UserResponse {
+	var workspaceID *int64
+	if user.WorkspaceID.Valid {
+		workspaceID = &user.WorkspaceID.Int64
+	}
+
 	return UserResponse{
 		ID:             user.ID,
 		OrganizationID: user.OrganizationID,
 		Email:          user.Email,
 		FirstName:      user.FirstName,
 		LastName:       user.LastName,
+		WorkspaceID:    workspaceID,
+		Role:           user.Role,
 		CreatedAt:      user.CreatedAt,
 	}
 }
