@@ -37,3 +37,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Exlude the TODO.md file for local development and tracking
+*.md
