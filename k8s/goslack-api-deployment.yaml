@@ -1,0 +1,98 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goslack-api
+  namespace: goslack
+  labels:
+    app: goslack-api
+spec:
+  replicas: 2  # Start with 2 replicas for high availability
+  selector:
+    matchLabels:
+      app: goslack-api
+  template:
+    metadata:
+      labels:
+        app: goslack-api
+    spec:
+      containers:
+      - name: goslack-api
+        image: goslack-api:latest  # You'll need to build and tag this image
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: DB_DRIVER
+          valueFrom:
+            configMapKeyRef:
+              name: goslack-config
+              key: DB_DRIVER
+        - name: DB_SOURCE
+          value: "postgresql://root:$(POSTGRES_PASSWORD)@postgres-service:5432/goslack?sslmode=disable"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secrets
+              key: postgres-password
+        - name: HTTP_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              name: goslack-config
+              key: HTTP_SERVER_ADDRESS
+        - name: TOKEN_SYMMETRIC_KEY
+          valueFrom:
+            secretKeyRef:
+              name: goslack-secrets
+              key: jwt-secret-key
+        - name: ACCESS_TOKEN_DURATION
+          valueFrom:
+            configMapKeyRef:
+              name: goslack-config
+              key: ACCESS_TOKEN_DURATION
+        - name: REFRESH_TOKEN_DURATION
+          valueFrom:
+            configMapKeyRef:
+              name: goslack-config
+              key: REFRESH_TOKEN_DURATION
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /organizations
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /organizations
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+      # Add an init container to wait for database migration
+      initContainers:
+      - name: wait-for-migration
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Waiting for database migration to complete..."
+          until nc -z postgres-service 5432; do
+            echo "PostgreSQL is not ready yet..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+          # Additional check to ensure migration job has completed
+          sleep 10
+          echo "Ready to start GoSlack API!"
+

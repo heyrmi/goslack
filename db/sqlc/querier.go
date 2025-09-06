@@ -9,18 +9,37 @@ import (
 )
 
 type Querier interface {
+	CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error)
+	CreateChannel(ctx context.Context, arg CreateChannelParams) (Channel, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams) (Workspace, error)
+	DeleteChannel(ctx context.Context, id int64) error
 	DeleteOrganization(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
+	DeleteWorkspace(ctx context.Context, id int64) error
+	GetChannel(ctx context.Context, id int64) (Channel, error)
+	GetChannelByID(ctx context.Context, id int64) (Channel, error)
+	GetChannelWithCreator(ctx context.Context, id int64) (GetChannelWithCreatorRow, error)
 	GetOrganization(ctx context.Context, id int64) (Organization, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspaceParams) ([]User, error)
+	GetWorkspace(ctx context.Context, id int64) (Workspace, error)
+	GetWorkspaceByID(ctx context.Context, id int64) (Workspace, error)
+	GetWorkspaceWithUserCount(ctx context.Context, id int64) (GetWorkspaceWithUserCountRow, error)
+	ListChannelsByWorkspace(ctx context.Context, arg ListChannelsByWorkspaceParams) ([]Channel, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
+	ListPublicChannelsByWorkspace(ctx context.Context, arg ListPublicChannelsByWorkspaceParams) ([]Channel, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	ListWorkspacesByOrganization(ctx context.Context, arg ListWorkspacesByOrganizationParams) ([]Workspace, error)
+	UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (User, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
+	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error)
+	UpdateUserWorkspace(ctx context.Context, arg UpdateUserWorkspaceParams) (User, error)
+	UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams) (Workspace, error)
 }
 
 var _ Querier = (*Queries)(nil)
