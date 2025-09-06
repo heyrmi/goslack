@@ -1,0 +1,59 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: goslack-ingress
+  namespace: goslack
+  labels:
+    app: goslack
+  annotations:
+    # For NGINX Ingress Controller
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    # Enable CORS for API access from frontend applications
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    # SSL redirect (uncomment when you have TLS certificates)
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  rules:
+  - host: goslack.local  # Change this to your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: goslack-api-service
+            port:
+              number: 80
+  # TLS configuration (uncomment when you have certificates)
+  # tls:
+  # - hosts:
+  #   - goslack.local
+  #   secretName: goslack-tls
+---
+# Alternative Ingress for minikube or local development
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: goslack-ingress-local
+  namespace: goslack
+  labels:
+    app: goslack
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:  # No host specified - will match any host
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: goslack-api-service
+            port:
+              number: 80
+
