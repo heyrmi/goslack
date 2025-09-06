@@ -91,3 +91,77 @@ type ListChannelsRequest struct {
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
 }
+
+// SendChannelMessageRequest represents the request to send a channel message
+type SendChannelMessageRequest struct {
+	Content string `json:"content" binding:"required,max=4000"`
+}
+
+// SendDirectMessageRequest represents the request to send a direct message
+type SendDirectMessageRequest struct {
+	ReceiverID int64  `json:"receiver_id" binding:"required,min=1"`
+	Content    string `json:"content" binding:"required,max=4000"`
+}
+
+// EditMessageRequest represents the request to edit a message
+type EditMessageRequest struct {
+	Content string `json:"content" binding:"required,max=4000"`
+}
+
+// MessageResponse represents a message in API responses
+type MessageResponse struct {
+	ID          int64        `json:"id"`
+	WorkspaceID int64        `json:"workspace_id"`
+	ChannelID   *int64       `json:"channel_id,omitempty"`
+	SenderID    int64        `json:"sender_id"`
+	ReceiverID  *int64       `json:"receiver_id,omitempty"`
+	Content     string       `json:"content"`
+	MessageType string       `json:"message_type"`
+	ThreadID    *int64       `json:"thread_id,omitempty"`
+	Sender      UserResponse `json:"sender"`
+	EditedAt    *time.Time   `json:"edited_at,omitempty"`
+	CreatedAt   time.Time    `json:"created_at"`
+	// WebSocket metadata (for Phase 5)
+	EventType string `json:"event_type,omitempty"` // "message_sent", "message_edited", etc.
+}
+
+// UpdateUserStatusRequest represents the request to update user status
+type UpdateUserStatusRequest struct {
+	Status       string `json:"status" binding:"required,oneof=online away busy offline"`
+	CustomStatus string `json:"custom_status" binding:"max=100"`
+}
+
+// UserStatusResponse represents user status in API responses
+type UserStatusResponse struct {
+	UserID       int64        `json:"user_id"`
+	WorkspaceID  int64        `json:"workspace_id"`
+	Status       string       `json:"status"`
+	CustomStatus string       `json:"custom_status,omitempty"`
+	LastSeenAt   time.Time    `json:"last_seen_at"`
+	User         UserResponse `json:"user"`
+	// WebSocket metadata
+	EventType string `json:"event_type,omitempty"` // "status_changed"
+}
+
+// GetMessagesRequest represents the request to get messages with pagination
+type GetMessagesRequest struct {
+	Limit  int32 `form:"limit" binding:"required,min=1,max=100"`
+	Offset int32 `form:"offset" binding:"min=0"`
+}
+
+// AddChannelMemberRequest represents the request to add a member to a channel
+type AddChannelMemberRequest struct {
+	UserID int64  `json:"user_id" binding:"required,min=1"`
+	Role   string `json:"role" binding:"required,oneof=admin member"`
+}
+
+// ChannelMemberResponse represents a channel member in API responses
+type ChannelMemberResponse struct {
+	ID        int64        `json:"id"`
+	ChannelID int64        `json:"channel_id"`
+	UserID    int64        `json:"user_id"`
+	AddedBy   int64        `json:"added_by"`
+	Role      string       `json:"role"`
+	JoinedAt  time.Time    `json:"joined_at"`
+	User      UserResponse `json:"user"`
+}

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 
 	"github.com/heyrmi/goslack/api"
 	db "github.com/heyrmi/goslack/db/sqlc"
+	"github.com/heyrmi/goslack/service"
 	"github.com/heyrmi/goslack/util"
 	_ "github.com/lib/pq"
 )
@@ -27,8 +29,19 @@ func main() {
 		log.Fatal("cannot create server:", err)
 	}
 
+	// Start background services
+	startBackgroundServices(store)
+
 	err = server.Start(config.HTTPServerAddress)
 	if err != nil {
 		log.Fatal("cannot start server:", err)
 	}
+}
+
+// startBackgroundServices starts background services like inactivity monitoring
+func startBackgroundServices(store db.Store) {
+	statusService := service.NewStatusService(store)
+
+	// Start inactivity monitor in background
+	go statusService.StartInactivityMonitor(context.Background())
 }

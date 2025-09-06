@@ -18,6 +18,29 @@ type Channel struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
+type ChannelMember struct {
+	ID        int64     `json:"id"`
+	ChannelID int64     `json:"channel_id"`
+	UserID    int64     `json:"user_id"`
+	AddedBy   int64     `json:"added_by"`
+	Role      string    `json:"role"`
+	JoinedAt  time.Time `json:"joined_at"`
+}
+
+type Message struct {
+	ID          int64         `json:"id"`
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	SenderID    int64         `json:"sender_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	Content     string        `json:"content"`
+	MessageType string        `json:"message_type"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+	EditedAt    sql.NullTime  `json:"edited_at"`
+	DeletedAt   sql.NullTime  `json:"deleted_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+}
+
 type Organization struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
@@ -35,6 +58,16 @@ type User struct {
 	CreatedAt         time.Time     `json:"created_at"`
 	WorkspaceID       sql.NullInt64 `json:"workspace_id"`
 	Role              string        `json:"role"`
+}
+
+type UserStatus struct {
+	UserID         int64          `json:"user_id"`
+	WorkspaceID    int64          `json:"workspace_id"`
+	Status         string         `json:"status"`
+	CustomStatus   sql.NullString `json:"custom_status"`
+	LastActivityAt time.Time      `json:"last_activity_at"`
+	LastSeenAt     time.Time      `json:"last_seen_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
 }
 
 type Workspace struct {

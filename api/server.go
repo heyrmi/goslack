@@ -20,6 +20,8 @@ type Server struct {
 	organizationService *service.OrganizationService
 	workspaceService    *service.WorkspaceService
 	channelService      *service.ChannelService
+	messageService      *service.MessageService
+	statusService       *service.StatusService
 }
 
 // NewServer creates a new HTTP server and set up routing.
@@ -33,6 +35,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	organizationService := service.NewOrganizationService(store)
 	workspaceService := service.NewWorkspaceService(store, userService)
 	channelService := service.NewChannelService(store, userService, workspaceService)
+	messageService := service.NewMessageService(store, userService)
+	statusService := service.NewStatusService(store)
 
 	server := &Server{
 		config:              config,
@@ -42,6 +46,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		organizationService: organizationService,
 		workspaceService:    workspaceService,
 		channelService:      channelService,
+		messageService:      messageService,
+		statusService:       statusService,
 	}
 
 	server.setupRouter()
@@ -90,6 +96,21 @@ func (server *Server) setupRouter() {
 
 	// User role management (admin only, same workspace)
 	authWithUserRoutes.PATCH("/users/:user_id/role", requireSameWorkspaceForUserRole(server.userService), server.updateUserRole)
+
+	// Message routes
+	authWithUserRoutes.POST("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.sendChannelMessage)
+	authWithUserRoutes.POST("/workspace/:id/messages/direct", requireWorkspaceMember(server.userService), server.sendDirectMessage)
+	authWithUserRoutes.GET("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.getChannelMessages)
+	authWithUserRoutes.GET("/workspace/:id/messages/direct/:user_id", requireWorkspaceMember(server.userService), server.getDirectMessages)
+	authWithUserRoutes.PUT("/messages/:message_id", server.editMessage)
+	authWithUserRoutes.DELETE("/messages/:message_id", server.deleteMessage)
+	authWithUserRoutes.GET("/messages/:message_id", server.getMessage)
+
+	// Status routes
+	authWithUserRoutes.PUT("/workspace/:id/status", requireWorkspaceMember(server.userService), server.updateUserStatus)
+	authWithUserRoutes.GET("/workspace/:id/status/:user_id", requireWorkspaceMember(server.userService), server.getUserStatus)
+	authWithUserRoutes.GET("/workspace/:id/status", requireWorkspaceMember(server.userService), server.getWorkspaceUserStatuses)
+	authWithUserRoutes.POST("/workspace/:id/activity", requireWorkspaceMember(server.userService), server.updateUserActivity)
 
 	server.router = router
 }
