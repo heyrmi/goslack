@@ -10,7 +10,21 @@ import (
 	"github.com/lib/pq"
 )
 
-// createChannel creates a new channel in a workspace
+// @Summary Create Channel
+// @Description Create a new channel in a workspace (requires workspace membership)
+// @Tags channels
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param channel body service.CreateChannelRequest true "Channel creation details"
+// @Success 201 {object} service.ChannelResponse "Channel created successfully"
+// @Failure 400 {object} map[string]string "Invalid request or foreign key violation"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 409 {object} map[string]string "Channel name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id}/channels [post]
 func (server *Server) createChannel(ctx *gin.Context) {
 	// Get workspace ID from URL parameter
 	workspaceIDStr := ctx.Param("id")
@@ -54,7 +68,19 @@ func (server *Server) createChannel(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, channel)
 }
 
-// getChannel retrieves a channel by ID
+// @Summary Get Channel
+// @Description Retrieve channel information by ID (requires channel access)
+// @Tags channels
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Channel ID"
+// @Success 200 {object} service.ChannelResponse "Channel information"
+// @Failure 400 {object} map[string]string "Invalid channel ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Channel access required"
+// @Failure 404 {object} map[string]string "Channel not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /channels/{id} [get]
 func (server *Server) getChannel(ctx *gin.Context) {
 	var req getChannelRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -87,7 +113,20 @@ func (server *Server) getChannel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, channel)
 }
 
-// listChannels lists channels in a workspace
+// @Summary List Channels
+// @Description List channels in a workspace (requires workspace membership)
+// @Tags channels
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param page_id query int false "Page ID (default: 1)" minimum(1)
+// @Param page_size query int false "Page size (default: 50, max: 50)" minimum(5) maximum(50)
+// @Success 200 {array} service.ChannelResponse "List of channels"
+// @Failure 400 {object} map[string]string "Invalid request or pagination parameters"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id}/channels [get]
 func (server *Server) listChannels(ctx *gin.Context) {
 	// Get workspace ID from URL parameter
 	workspaceIDStr := ctx.Param("id")
@@ -135,7 +174,21 @@ func (server *Server) listChannels(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, channels)
 }
 
-// updateChannel updates a channel's information
+// @Summary Update Channel
+// @Description Update channel information (requires channel access)
+// @Tags channels
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Channel ID"
+// @Param channel body updateChannelRequest true "Channel update details"
+// @Success 200 {object} service.ChannelResponse "Channel updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Channel access required"
+// @Failure 409 {object} map[string]string "Channel name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /channels/{id} [put]
 func (server *Server) updateChannel(ctx *gin.Context) {
 	var uriReq getChannelRequest
 	if err := ctx.ShouldBindUri(&uriReq); err != nil {
@@ -174,7 +227,18 @@ func (server *Server) updateChannel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, channel)
 }
 
-// deleteChannel deletes a channel
+// @Summary Delete Channel
+// @Description Delete a channel (requires channel access)
+// @Tags channels
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Channel ID"
+// @Success 200 {object} map[string]string "Channel deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid channel ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Channel access required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /channels/{id} [delete]
 func (server *Server) deleteChannel(ctx *gin.Context) {
 	var req getChannelRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -200,7 +264,20 @@ func (server *Server) deleteChannel(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "channel deleted successfully"})
 }
 
-// updateUserRole updates a user's role in their workspace (admin only)
+// @Summary Update User Role
+// @Description Update a user's role in their workspace (admin only, same workspace)
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param user_id path int true "Target User ID"
+// @Param role body service.UpdateUserRoleRequest true "Role update details"
+// @Success 200 {object} service.UserResponse "User role updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Admin access required in same workspace"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /users/{user_id}/role [patch]
 func (server *Server) updateUserRole(ctx *gin.Context) {
 	// Get target user ID from URL parameter
 	targetUserIDStr := ctx.Param("user_id")

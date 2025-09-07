@@ -10,6 +10,8 @@ import (
 	"github.com/heyrmi/goslack/service"
 	"github.com/heyrmi/goslack/token"
 	"github.com/heyrmi/goslack/util"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Server serves HTTP requests for our GoSlack service.
@@ -77,6 +79,12 @@ func (server *Server) setupRouter() {
 		MaxAge:           12 * time.Hour,
 	}
 	router.Use(cors.New(config))
+
+	// Swagger documentation endpoint
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// API info endpoint
+	router.GET("/api/info", server.getAPIInfo)
 
 	// Public routes (no authentication required)
 	router.POST("/organizations", server.createOrganization)
@@ -161,4 +169,34 @@ func (server *Server) Start(address string) error {
 
 func errorResponse(err error) gin.H {
 	return gin.H{"error": err.Error()}
+}
+
+// @Summary Get API Information
+// @Description Get general information about the GoSlack API
+// @Tags system
+// @Produce json
+// @Success 200 {object} map[string]interface{} "API information"
+// @Router /api/info [get]
+func (server *Server) getAPIInfo(ctx *gin.Context) {
+	info := gin.H{
+		"name":        "GoSlack API",
+		"version":     "1.0",
+		"description": "A Slack-like collaboration platform API with real-time messaging, file sharing, and workspace management.",
+		"endpoints": gin.H{
+			"swagger_ui":  "/swagger/index.html",
+			"swagger_doc": "/swagger/doc.json",
+		},
+		"features": []string{
+			"User Management",
+			"Organization Management",
+			"Workspace Management",
+			"Channel Management",
+			"Real-time Messaging",
+			"File Management",
+			"Status Management",
+			"WebSocket Support",
+		},
+	}
+
+	ctx.JSON(200, info)
 }

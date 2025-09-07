@@ -10,7 +10,18 @@ import (
 	"github.com/heyrmi/goslack/service"
 )
 
-// handleTyping handles POST /workspaces/:id/channels/:channel_id/typing
+// @Summary Send Typing Indicator
+// @Description Send typing indicator to a channel (requires workspace membership)
+// @Tags realtime
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param channel_id path int true "Channel ID"
+// @Success 200 {object} map[string]string "Typing indicator sent"
+// @Failure 400 {object} map[string]string "Invalid workspace ID or channel ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Router /workspaces/{id}/channels/{channel_id}/typing [post]
 func (server *Server) handleTyping(ctx *gin.Context) {
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")

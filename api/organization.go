@@ -9,7 +9,17 @@ import (
 	"github.com/lib/pq"
 )
 
-// createOrganization creates a new organization
+// @Summary Create Organization
+// @Description Create a new organization
+// @Tags organizations
+// @Accept json
+// @Produce json
+// @Param organization body service.CreateOrganizationRequest true "Organization creation details"
+// @Success 200 {object} db.Organization "Organization created successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 403 {object} map[string]string "Organization name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /organizations [post]
 func (server *Server) createOrganization(ctx *gin.Context) {
 	var req service.CreateOrganizationRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -33,7 +43,15 @@ func (server *Server) createOrganization(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, organization)
 }
 
-// getOrganization retrieves an organization by ID
+// @Summary Get Organization
+// @Description Retrieve an organization by ID
+// @Tags organizations
+// @Produce json
+// @Param id path int true "Organization ID"
+// @Success 200 {object} db.Organization "Organization details"
+// @Failure 400 {object} map[string]string "Invalid organization ID"
+// @Failure 404 {object} map[string]string "Organization not found"
+// @Router /organizations/{id} [get]
 func (server *Server) getOrganization(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -51,7 +69,19 @@ func (server *Server) getOrganization(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, organization)
 }
 
-// updateOrganization updates an organization
+// @Summary Update Organization
+// @Description Update an organization's information (requires authentication)
+// @Tags organizations
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Organization ID"
+// @Param organization body service.CreateOrganizationRequest true "Organization update details"
+// @Success 200 {object} db.Organization "Organization updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /organizations/{id} [put]
 func (server *Server) updateOrganization(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -75,7 +105,16 @@ func (server *Server) updateOrganization(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, organization)
 }
 
-// listOrganizations lists organizations with pagination
+// @Summary List Organizations
+// @Description List all organizations with pagination
+// @Tags organizations
+// @Produce json
+// @Param page_id query int false "Page ID (default: 1)" minimum(1)
+// @Param page_size query int false "Page size (default: 10, max: 10)" minimum(5) maximum(10)
+// @Success 200 {array} db.Organization "List of organizations"
+// @Failure 400 {object} map[string]string "Invalid pagination parameters"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /organizations [get]
 func (server *Server) listOrganizations(ctx *gin.Context) {
 	var req listOrganizationsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -100,7 +139,17 @@ func (server *Server) listOrganizations(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, organizations)
 }
 
-// deleteOrganization deletes an organization
+// @Summary Delete Organization
+// @Description Delete an organization (requires authentication)
+// @Tags organizations
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Organization ID"
+// @Success 200 {object} map[string]string "Organization deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid organization ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /organizations/{id} [delete]
 func (server *Server) deleteOrganization(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

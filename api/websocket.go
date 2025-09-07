@@ -386,7 +386,15 @@ func (c *Client) handleIncomingMessage(message map[string]interface{}) {
 	}
 }
 
-// handleWebSocket handles WebSocket upgrade requests
+// @Summary WebSocket Connection
+// @Description Establish WebSocket connection for real-time communication (requires authentication)
+// @Tags realtime
+// @Security BearerAuth
+// @Produce json
+// @Success 101 {string} string "WebSocket connection established"
+// @Failure 400 {object} map[string]string "WebSocket upgrade failed"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Router /ws [get]
 func (server *Server) handleWebSocket(c *gin.Context) {
 	// Get current user from middleware
 	currentUser := getCurrentUser(c)

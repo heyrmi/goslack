@@ -9,7 +9,19 @@ import (
 	"github.com/lib/pq"
 )
 
-// createWorkspace creates a new workspace
+// @Summary Create Workspace
+// @Description Create a new workspace in the user's organization
+// @Tags workspaces
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param workspace body service.CreateWorkspaceRequest true "Workspace creation details"
+// @Success 201 {object} service.WorkspaceResponse "Workspace created successfully"
+// @Failure 400 {object} map[string]string "Invalid request or foreign key violation"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 409 {object} map[string]string "Workspace name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces [post]
 func (server *Server) createWorkspace(ctx *gin.Context) {
 	var req service.CreateWorkspaceRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -45,7 +57,17 @@ func (server *Server) createWorkspace(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, workspace)
 }
 
-// getWorkspace retrieves a workspace by ID
+// @Summary Get Workspace
+// @Description Retrieve workspace information by ID
+// @Tags workspaces
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Success 200 {object} service.WorkspaceResponse "Workspace information"
+// @Failure 400 {object} map[string]string "Invalid workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "Workspace not found"
+// @Router /workspaces/{id} [get]
 func (server *Server) getWorkspace(ctx *gin.Context) {
 	var req getWorkspaceRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -62,7 +84,18 @@ func (server *Server) getWorkspace(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, workspace)
 }
 
-// listWorkspaces lists workspaces in the user's organization
+// @Summary List Workspaces
+// @Description List workspaces in the authenticated user's organization
+// @Tags workspaces
+// @Security BearerAuth
+// @Produce json
+// @Param page_id query int false "Page ID (default: 1)" minimum(1)
+// @Param page_size query int false "Page size (default: 50, max: 50)" minimum(5) maximum(50)
+// @Success 200 {array} service.WorkspaceResponse "List of workspaces"
+// @Failure 400 {object} map[string]string "Invalid pagination parameters"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces [get]
 func (server *Server) listWorkspaces(ctx *gin.Context) {
 	var req listWorkspacesRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -101,7 +134,21 @@ func (server *Server) listWorkspaces(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, workspaces)
 }
 
-// updateWorkspace updates a workspace's information
+// @Summary Update Workspace
+// @Description Update workspace information (requires workspace admin role)
+// @Tags workspaces
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param workspace body updateWorkspaceRequest true "Workspace update details"
+// @Success 200 {object} service.WorkspaceResponse "Workspace updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace admin access required"
+// @Failure 409 {object} map[string]string "Workspace name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id} [put]
 func (server *Server) updateWorkspace(ctx *gin.Context) {
 	var uriReq getWorkspaceRequest
 	if err := ctx.ShouldBindUri(&uriReq); err != nil {
@@ -131,7 +178,18 @@ func (server *Server) updateWorkspace(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, workspace)
 }
 
-// deleteWorkspace deletes a workspace
+// @Summary Delete Workspace
+// @Description Delete a workspace (requires workspace admin role)
+// @Tags workspaces
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Success 200 {object} map[string]string "Workspace deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace admin access required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id} [delete]
 func (server *Server) deleteWorkspace(ctx *gin.Context) {
 	var req getWorkspaceRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {

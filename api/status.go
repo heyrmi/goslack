@@ -9,7 +9,20 @@ import (
 	"github.com/heyrmi/goslack/service"
 )
 
-// updateUserStatus handles PUT /workspace/:id/status
+// @Summary Update User Status
+// @Description Update user's online status in a workspace (requires workspace membership)
+// @Tags status
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param status body service.UpdateUserStatusRequest true "Status update details"
+// @Success 200 {object} service.UserStatusResponse "Status updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request or workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspace/{id}/status [put]
 func (server *Server) updateUserStatus(ctx *gin.Context) {
 	var req service.UpdateUserStatusRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -38,7 +51,19 @@ func (server *Server) updateUserStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, status)
 }
 
-// getUserStatus handles GET /workspace/:id/status/:user_id
+// @Summary Get User Status
+// @Description Get a specific user's status in a workspace (requires workspace membership)
+// @Tags status
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param user_id path int true "User ID"
+// @Success 200 {object} service.UserStatusResponse "User status information"
+// @Failure 400 {object} map[string]string "Invalid workspace ID or user ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspace/{id}/status/{user_id} [get]
 func (server *Server) getUserStatus(ctx *gin.Context) {
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")
@@ -66,7 +91,20 @@ func (server *Server) getUserStatus(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, status)
 }
 
-// getWorkspaceUserStatuses handles GET /workspace/:id/status
+// @Summary Get Workspace User Statuses
+// @Description Get all user statuses in a workspace (requires workspace membership)
+// @Tags status
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param limit query int false "Number of statuses to retrieve (default: 50, max: 100)" minimum(1) maximum(100)
+// @Param offset query int false "Number of statuses to skip (default: 0)" minimum(0)
+// @Success 200 {object} map[string]interface{} "Workspace user statuses"
+// @Failure 400 {object} map[string]string "Invalid request or workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspace/{id}/status [get]
 func (server *Server) getWorkspaceUserStatuses(ctx *gin.Context) {
 	var req service.GetMessagesRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -92,7 +130,18 @@ func (server *Server) getWorkspaceUserStatuses(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"statuses": statuses})
 }
 
-// updateUserActivity handles POST /workspace/:id/activity
+// @Summary Update User Activity
+// @Description Update user's last activity timestamp (requires workspace membership)
+// @Tags status
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Success 200 {object} map[string]string "Activity updated successfully"
+// @Failure 400 {object} map[string]string "Invalid workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspace/{id}/activity [post]
 func (server *Server) updateUserActivity(ctx *gin.Context) {
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")

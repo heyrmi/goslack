@@ -42,4 +42,14 @@ server:
 mock:
 	mockgen -package mockdb -destination db/mock/store.go github.com/heyrmi/goslack/db/sqlc Store
 
-.PHONY: network postgres createdb dropdb droptestdb migrateup migratedown migrateup1 migratedown1 new_migration sqlc test server mock
+swagger:
+	swag init -g main.go -o docs/ --parseInternal --parseDependency
+
+swagger-serve: swagger
+	@echo "Swagger documentation available at: http://localhost:8080/swagger/index.html"
+	make server
+
+swagger-clean:
+	rm -rf docs/
+
+.PHONY: network postgres createdb dropdb droptestdb migrateup migratedown migrateup1 migratedown1 new_migration sqlc test server mock swagger swagger-serve swagger-clean
