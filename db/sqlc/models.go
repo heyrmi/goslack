@@ -5,8 +5,77 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
+
+type Channel struct {
+	ID          int64     `json:"id"`
+	WorkspaceID int64     `json:"workspace_id"`
+	Name        string    `json:"name"`
+	IsPrivate   bool      `json:"is_private"`
+	CreatedBy   int64     `json:"created_by"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type ChannelMember struct {
+	ID        int64     `json:"id"`
+	ChannelID int64     `json:"channel_id"`
+	UserID    int64     `json:"user_id"`
+	AddedBy   int64     `json:"added_by"`
+	Role      string    `json:"role"`
+	JoinedAt  time.Time `json:"joined_at"`
+}
+
+type File struct {
+	ID               int64          `json:"id"`
+	WorkspaceID      int64          `json:"workspace_id"`
+	UploaderID       int64          `json:"uploader_id"`
+	OriginalFilename string         `json:"original_filename"`
+	StoredFilename   string         `json:"stored_filename"`
+	FilePath         string         `json:"file_path"`
+	FileSize         int64          `json:"file_size"`
+	MimeType         string         `json:"mime_type"`
+	FileHash         string         `json:"file_hash"`
+	IsPublic         bool           `json:"is_public"`
+	UploadCompleted  bool           `json:"upload_completed"`
+	ThumbnailPath    sql.NullString `json:"thumbnail_path"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+}
+
+type FileShare struct {
+	ID               int64         `json:"id"`
+	FileID           int64         `json:"file_id"`
+	SharedBy         int64         `json:"shared_by"`
+	ChannelID        sql.NullInt64 `json:"channel_id"`
+	SharedWithUserID sql.NullInt64 `json:"shared_with_user_id"`
+	Permission       string        `json:"permission"`
+	ExpiresAt        sql.NullTime  `json:"expires_at"`
+	CreatedAt        time.Time     `json:"created_at"`
+}
+
+type Message struct {
+	ID          int64         `json:"id"`
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	SenderID    int64         `json:"sender_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	Content     string        `json:"content"`
+	MessageType string        `json:"message_type"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+	EditedAt    sql.NullTime  `json:"edited_at"`
+	DeletedAt   sql.NullTime  `json:"deleted_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+	ContentType string        `json:"content_type"`
+}
+
+type MessageFile struct {
+	ID        int64     `json:"id"`
+	MessageID int64     `json:"message_id"`
+	FileID    int64     `json:"file_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
 
 type Organization struct {
 	ID        int64     `json:"id"`
@@ -15,12 +84,31 @@ type Organization struct {
 }
 
 type User struct {
-	ID                int64     `json:"id"`
-	OrganizationID    int64     `json:"organization_id"`
-	Email             string    `json:"email"`
-	FirstName         string    `json:"first_name"`
-	LastName          string    `json:"last_name"`
-	HashedPassword    string    `json:"hashed_password"`
-	PasswordChangedAt time.Time `json:"password_changed_at"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                int64         `json:"id"`
+	OrganizationID    int64         `json:"organization_id"`
+	Email             string        `json:"email"`
+	FirstName         string        `json:"first_name"`
+	LastName          string        `json:"last_name"`
+	HashedPassword    string        `json:"hashed_password"`
+	PasswordChangedAt time.Time     `json:"password_changed_at"`
+	CreatedAt         time.Time     `json:"created_at"`
+	WorkspaceID       sql.NullInt64 `json:"workspace_id"`
+	Role              string        `json:"role"`
+}
+
+type UserStatus struct {
+	UserID         int64          `json:"user_id"`
+	WorkspaceID    int64          `json:"workspace_id"`
+	Status         string         `json:"status"`
+	CustomStatus   sql.NullString `json:"custom_status"`
+	LastActivityAt time.Time      `json:"last_activity_at"`
+	LastSeenAt     time.Time      `json:"last_seen_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
+type Workspace struct {
+	ID             int64     `json:"id"`
+	OrganizationID int64     `json:"organization_id"`
+	Name           string    `json:"name"`
+	CreatedAt      time.Time `json:"created_at"`
 }

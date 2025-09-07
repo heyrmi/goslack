@@ -58,3 +58,13 @@ func RandomOrganizationName() string {
 	organizations := []string{"Tech Corp", "Innovation Inc", "Digital Solutions", "Future Systems", "Smart Tech"}
 	return organizations[rand.Intn(len(organizations))]
 }
+
+// RandomBool generates a random boolean value
+func RandomBool() bool {
+	return rand.Intn(2) == 1
+}
+
+// IntToString converts an int64 to string
+func IntToString(i int64) string {
+	return fmt.Sprintf("%d", i)
+}

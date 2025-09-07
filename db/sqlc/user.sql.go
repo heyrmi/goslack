@@ -7,7 +7,26 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
+
+const checkUserWorkspaceRole = `-- name: CheckUserWorkspaceRole :one
+SELECT role FROM users
+WHERE id = $1 AND workspace_id = $2
+LIMIT 1
+`
+
+type CheckUserWorkspaceRoleParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+}
+
+func (q *Queries) CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error) {
+	row := q.db.QueryRowContext(ctx, checkUserWorkspaceRole, arg.ID, arg.WorkspaceID)
+	var role string
+	err := row.Scan(&role)
+	return role, err
+}
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
@@ -19,7 +38,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5
 )
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
 `
 
 type CreateUserParams struct {
@@ -48,6 +67,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.HashedPassword,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }
@@ -63,7 +84,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -79,12 +100,14 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.HashedPassword,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -100,12 +123,62 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.HashedPassword,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }
 
+const getUsersByWorkspace = `-- name: GetUsersByWorkspace :many
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
+WHERE workspace_id = $1
+ORDER BY created_at ASC
+LIMIT $2
+OFFSET $3
+`
+
+type GetUsersByWorkspaceParams struct {
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Limit       int32         `json:"limit"`
+	Offset      int32         `json:"offset"`
+}
+
+func (q *Queries) GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspaceParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersByWorkspace, arg.WorkspaceID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []User{}
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.Email,
+			&i.FirstName,
+			&i.LastName,
+			&i.HashedPassword,
+			&i.PasswordChangedAt,
+			&i.CreatedAt,
+			&i.WorkspaceID,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsers = `-- name: ListUsers :many
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
 WHERE organization_id = $1
 ORDER BY id
 LIMIT $2
@@ -136,6 +209,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.HashedPassword,
 			&i.PasswordChangedAt,
 			&i.CreatedAt,
+			&i.WorkspaceID,
+			&i.Role,
 		); err != nil {
 			return nil, err
 		}
@@ -156,7 +231,7 @@ SET
     hashed_password = $2,
     password_changed_at = now()
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
 `
 
 type UpdateUserPasswordParams struct {
@@ -176,6 +251,8 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 		&i.HashedPassword,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }
@@ -186,7 +263,7 @@ SET
     first_name = $2,
     last_name = $3
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
 `
 
 type UpdateUserProfileParams struct {
@@ -207,6 +284,71 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.HashedPassword,
 		&i.PasswordChangedAt,
 		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
+	)
+	return i, err
+}
+
+const updateUserRole = `-- name: UpdateUserRole :one
+UPDATE users
+SET role = $2
+WHERE id = $1
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+`
+
+type UpdateUserRoleParams struct {
+	ID   int64  `json:"id"`
+	Role string `json:"role"`
+}
+
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserRole, arg.ID, arg.Role)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.HashedPassword,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
+	)
+	return i, err
+}
+
+const updateUserWorkspace = `-- name: UpdateUserWorkspace :one
+UPDATE users
+SET 
+    workspace_id = $2,
+    role = $3
+WHERE id = $1
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+`
+
+type UpdateUserWorkspaceParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Role        string        `json:"role"`
+}
+
+func (q *Queries) UpdateUserWorkspace(ctx context.Context, arg UpdateUserWorkspaceParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserWorkspace, arg.ID, arg.WorkspaceID, arg.Role)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.HashedPassword,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }

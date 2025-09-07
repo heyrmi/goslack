@@ -170,6 +170,14 @@ func (server *Server) listUsers(ctx *gin.Context) {
 		return
 	}
 
+	// Set default values if not provided
+	if req.PageID == 0 {
+		req.PageID = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
 	user, err := server.userService.GetUserByEmail(ctx, authPayload.Username)
 	if err != nil {
@@ -191,6 +199,6 @@ type getUserRequest struct {
 }
 
 type listUsersRequest struct {
-	PageID   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+	PageID   int32 `form:"page_id" binding:"omitempty,min=1"`
+	PageSize int32 `form:"page_size" binding:"omitempty,min=5,max=10"`
 }
