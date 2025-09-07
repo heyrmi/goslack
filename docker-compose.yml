@@ -1,9 +1,9 @@
-version: "3.9"
+version: "3.8"
 
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: goslack_postgres
+    image: postgres:17-alpine
+    container_name: goslack-postgres
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: secret
@@ -12,26 +12,62 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Initialize the database with our schema
+      - ./db/migration:/docker-entrypoint-initdb.d/
     networks:
-      - goslack
+      - goslack-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d goslack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  api:
+  goslack-api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: goslack_api
+    container_name: goslack-api
     ports:
       - "8080:8080"
     environment:
+      DB_DRIVER: postgres
       DB_SOURCE: postgresql://root:secret@postgres:5432/goslack?sslmode=disable
+      HTTP_SERVER_ADDRESS: 0.0.0.0:8080
+      TOKEN_SYMMETRIC_KEY: "abcdefghijklmnopqrstuvwxyz123456"
+      ACCESS_TOKEN_DURATION: 15m
+      REFRESH_TOKEN_DURATION: 24h
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
-      - goslack
-    command: ["/app/wait-for.sh", "postgres:5432", "--", "/app/main"]
+      - goslack-network
+    restart: unless-stopped
+
+  # Migration service to run database migrations
+  migrate:
+    image: migrate/migrate
+    container_name: goslack-migrate
+    volumes:
+      - ./db/migration:/migrations
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgresql://root:secret@postgres:5432/goslack?sslmode=disable",
+        "-verbose",
+        "up",
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - goslack-network
+    restart: "no"
 
 networks:
-  goslack:
+  goslack-network:
     driver: bridge
 
 volumes:

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: goslack-api-service
+  namespace: goslack
+  labels:
+    app: goslack-api
+spec:
+  type: LoadBalancer  # Use LoadBalancer for external access, or NodePort for local clusters
+  selector:
+    app: goslack-api
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  # For cloud providers, you can add annotations for load balancer configuration
+  # annotations:
+  #   service.beta.kubernetes.io/aws-load-balancer-type: nlb  # For AWS NLB
+  #   service.beta.kubernetes.io/azure-load-balancer-resource-group: myResourceGroup  # For Azure
+
