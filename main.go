@@ -1,3 +1,24 @@
+// @title GoSlack API
+// @version 1.0
+// @description A Slack-like collaboration platform API with real-time messaging, file sharing, and workspace management.
+// @termsOfService https://github.com/heyrmi/goslack
+
+// @contact.name API Support
+// @contact.url https://github.com/heyrmi/goslack/issues
+// @contact.email support@goslack.dev
+
+// @license.name MIT
+// @license.url https://github.com/heyrmi/goslack/blob/main/LICENSE
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
@@ -10,6 +31,8 @@ import (
 	"github.com/heyrmi/goslack/service"
 	"github.com/heyrmi/goslack/util"
 	_ "github.com/lib/pq"
+
+	_ "github.com/heyrmi/goslack/docs" // Import generated docs
 )
 
 func main() {

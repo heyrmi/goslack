@@ -10,7 +10,23 @@ import (
 	"github.com/heyrmi/goslack/service"
 )
 
-// uploadFile handles file upload requests
+// @Summary Upload File
+// @Description Upload a file to a workspace, channel, or for direct messaging
+// @Tags files
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "File to upload"
+// @Param workspace_id formData int true "Workspace ID"
+// @Param channel_id formData int false "Channel ID (for channel files)"
+// @Param receiver_id formData int false "Receiver User ID (for direct message files)"
+// @Success 201 {object} map[string]interface{} "File uploaded successfully"
+// @Failure 400 {object} map[string]string "Invalid request, file too large, or validation error"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Access denied - workspace/channel membership required"
+// @Failure 413 {object} map[string]string "File too large"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /files/upload [post]
 func (server *Server) uploadFile(ctx *gin.Context) {
 	// Get current user
 	currentUser, exists := ctx.Get(currentUserKey)
@@ -74,7 +90,18 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 	})
 }
 
-// downloadFile handles file download requests
+// @Summary Download File
+// @Description Download a file by ID (requires appropriate access permissions)
+// @Tags files
+// @Security BearerAuth
+// @Produce application/octet-stream
+// @Param id path int true "File ID"
+// @Success 200 {file} file "File content"
+// @Failure 400 {object} map[string]string "Invalid file ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "File not found or access denied"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /files/{id}/download [get]
 func (server *Server) downloadFile(ctx *gin.Context) {
 	// Get file ID from URL
 	fileIDStr := ctx.Param("id")
@@ -118,7 +145,20 @@ func (server *Server) downloadFile(ctx *gin.Context) {
 	}
 }
 
-// getFile retrieves file metadata
+// @Summary Get File Metadata
+// @Description Retrieve file metadata by ID (requires appropriate access permissions)
+// @Tags files
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "File ID"
+// @Param workspace_id query int true "Workspace ID"
+// @Success 200 {object} map[string]interface{} "File metadata"
+// @Failure 400 {object} map[string]string "Invalid file ID or workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Access denied - workspace membership required"
+// @Failure 404 {object} map[string]string "File not found or access denied"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /files/{id} [get]
 func (server *Server) getFile(ctx *gin.Context) {
 	// Get file ID from URL
 	fileIDStr := ctx.Param("id")
@@ -171,7 +211,20 @@ func (server *Server) getFile(ctx *gin.Context) {
 	})
 }
 
-// listWorkspaceFiles lists files in a workspace
+// @Summary List Workspace Files
+// @Description List all files in a workspace (requires workspace membership)
+// @Tags files
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Param page query int false "Page number (default: 1)" minimum(1)
+// @Param limit query int false "Files per page (default: 20, max: 100)" minimum(1) maximum(100)
+// @Success 200 {object} map[string]interface{} "List of files with pagination"
+// @Failure 400 {object} map[string]string "Invalid workspace ID or pagination parameters"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id}/files [get]
 func (server *Server) listWorkspaceFiles(ctx *gin.Context) {
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")
@@ -229,7 +282,19 @@ func (server *Server) listWorkspaceFiles(ctx *gin.Context) {
 	})
 }
 
-// deleteFile handles file deletion
+// @Summary Delete File
+// @Description Delete a file (only file uploader can delete)
+// @Tags files
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "File ID"
+// @Success 200 {object} map[string]string "File deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid file ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Only file uploader can delete"
+// @Failure 404 {object} map[string]string "File not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /files/{id} [delete]
 func (server *Server) deleteFile(ctx *gin.Context) {
 	// Get file ID from URL
 	fileIDStr := ctx.Param("id")
@@ -264,7 +329,18 @@ func (server *Server) deleteFile(ctx *gin.Context) {
 	})
 }
 
-// getFileStats returns file statistics for a workspace
+// @Summary Get File Statistics
+// @Description Get file statistics for a workspace (requires workspace membership)
+// @Tags files
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Workspace ID"
+// @Success 200 {object} map[string]interface{} "File statistics"
+// @Failure 400 {object} map[string]string "Invalid workspace ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /workspaces/{id}/files/stats [get]
 func (server *Server) getFileStats(ctx *gin.Context) {
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")
@@ -300,7 +376,19 @@ func (server *Server) getFileStats(ctx *gin.Context) {
 	})
 }
 
-// sendFileMessage creates a message with file attachment
+// @Summary Send File Message
+// @Description Send a message with file attachment to channel or direct message
+// @Tags files
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param message body map[string]interface{} true "File message details" example({"workspace_id": 1, "channel_id": 2, "file_id": 3, "content": "Check this out!"})
+// @Success 201 {object} map[string]interface{} "File message sent successfully"
+// @Failure 400 {object} map[string]string "Invalid request or file access denied"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Workspace membership required"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /files/message [post]
 func (server *Server) sendFileMessage(ctx *gin.Context) {
 	var req struct {
 		WorkspaceID int64  `json:"workspace_id" binding:"required"`

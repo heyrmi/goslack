@@ -1,0 +1,2399 @@
+basePath: /
+definitions:
+  api.updateChannelRequest:
+    properties:
+      is_private:
+        type: boolean
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  api.updateWorkspaceRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  db.Organization:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  service.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 6
+        type: string
+      old_password:
+        minLength: 6
+        type: string
+    required:
+    - new_password
+    - old_password
+    type: object
+  service.ChannelResponse:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      id:
+        type: integer
+      is_private:
+        type: boolean
+      name:
+        type: string
+      workspace_id:
+        type: integer
+    type: object
+  service.CreateChannelRequest:
+    properties:
+      is_private:
+        type: boolean
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  service.CreateOrganizationRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  service.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      organization_id:
+        minimum: 1
+        type: integer
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - organization_id
+    - password
+    type: object
+  service.CreateWorkspaceRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  service.EditMessageRequest:
+    properties:
+      content:
+        maxLength: 4000
+        type: string
+    required:
+    - content
+    type: object
+  service.FileResponse:
+    properties:
+      created_at:
+        type: string
+      download_url:
+        type: string
+      file_size:
+        type: integer
+      id:
+        type: integer
+      is_public:
+        type: boolean
+      mime_type:
+        type: string
+      original_filename:
+        type: string
+      thumbnail_url:
+        type: string
+      uploader:
+        $ref: '#/definitions/service.UserResponse'
+    type: object
+  service.LoginUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  service.LoginUserResponse:
+    properties:
+      access_token:
+        type: string
+      user:
+        $ref: '#/definitions/service.UserResponse'
+    type: object
+  service.MessageResponse:
+    properties:
+      channel_id:
+        type: integer
+      content:
+        type: string
+      content_type:
+        description: '"text", "file", "image", "system"'
+        type: string
+      created_at:
+        type: string
+      edited_at:
+        type: string
+      event_type:
+        description: WebSocket metadata (for Phase 5)
+        type: string
+      files:
+        description: Attached files
+        items:
+          $ref: '#/definitions/service.FileResponse'
+        type: array
+      id:
+        type: integer
+      message_type:
+        type: string
+      receiver_id:
+        type: integer
+      sender:
+        $ref: '#/definitions/service.UserResponse'
+      sender_id:
+        type: integer
+      thread_id:
+        type: integer
+      workspace_id:
+        type: integer
+    type: object
+  service.SendChannelMessageRequest:
+    properties:
+      content:
+        maxLength: 4000
+        type: string
+    required:
+    - content
+    type: object
+  service.SendDirectMessageRequest:
+    properties:
+      content:
+        maxLength: 4000
+        type: string
+      receiver_id:
+        minimum: 1
+        type: integer
+    required:
+    - content
+    - receiver_id
+    type: object
+  service.UpdateUserProfileRequest:
+    properties:
+      first_name:
+        type: string
+      last_name:
+        type: string
+    required:
+    - first_name
+    - last_name
+    type: object
+  service.UpdateUserRoleRequest:
+    properties:
+      role:
+        enum:
+        - admin
+        - member
+        type: string
+    required:
+    - role
+    type: object
+  service.UpdateUserStatusRequest:
+    properties:
+      custom_status:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - online
+        - away
+        - busy
+        - offline
+        type: string
+    required:
+    - status
+    type: object
+  service.UserResponse:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      organization_id:
+        type: integer
+      role:
+        type: string
+      workspace_id:
+        type: integer
+    type: object
+  service.UserStatusResponse:
+    properties:
+      custom_status:
+        type: string
+      event_type:
+        description: WebSocket metadata
+        type: string
+      last_seen_at:
+        type: string
+      status:
+        type: string
+      user:
+        $ref: '#/definitions/service.UserResponse'
+      user_id:
+        type: integer
+      workspace_id:
+        type: integer
+    type: object
+  service.WorkspaceResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      organization_id:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@goslack.dev
+    name: API Support
+    url: https://github.com/heyrmi/goslack/issues
+  description: A Slack-like collaboration platform API with real-time messaging, file
+    sharing, and workspace management.
+  license:
+    name: MIT
+    url: https://github.com/heyrmi/goslack/blob/main/LICENSE
+  termsOfService: https://github.com/heyrmi/goslack
+  title: GoSlack API
+  version: "1.0"
+paths:
+  /api/info:
+    get:
+      description: Get general information about the GoSlack API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: API information
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get API Information
+      tags:
+      - system
+  /channels/{id}:
+    delete:
+      description: Delete a channel (requires channel access)
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Channel deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid channel ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Channel access required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Channel
+      tags:
+      - channels
+    get:
+      description: Retrieve channel information by ID (requires channel access)
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Channel information
+          schema:
+            $ref: '#/definitions/service.ChannelResponse'
+        "400":
+          description: Invalid channel ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Channel access required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Channel not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Channel
+      tags:
+      - channels
+    put:
+      consumes:
+      - application/json
+      description: Update channel information (requires channel access)
+      parameters:
+      - description: Channel ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel update details
+        in: body
+        name: channel
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateChannelRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Channel updated successfully
+          schema:
+            $ref: '#/definitions/service.ChannelResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Channel access required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Channel name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Channel
+      tags:
+      - channels
+  /files/{id}:
+    delete:
+      description: Delete a file (only file uploader can delete)
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid file ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Only file uploader can delete
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete File
+      tags:
+      - files
+    get:
+      description: Retrieve file metadata by ID (requires appropriate access permissions)
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Workspace ID
+        in: query
+        name: workspace_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File metadata
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid file ID or workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Access denied - workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File not found or access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get File Metadata
+      tags:
+      - files
+  /files/{id}/download:
+    get:
+      description: Download a file by ID (requires appropriate access permissions)
+      parameters:
+      - description: File ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File content
+          schema:
+            type: file
+        "400":
+          description: Invalid file ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: File not found or access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Download File
+      tags:
+      - files
+  /files/message:
+    post:
+      consumes:
+      - application/json
+      description: Send a message with file attachment to channel or direct message
+      parameters:
+      - description: File message details
+        in: body
+        name: message
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: File message sent successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request or file access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send File Message
+      tags:
+      - files
+  /files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload a file to a workspace, channel, or for direct messaging
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Workspace ID
+        in: formData
+        name: workspace_id
+        required: true
+        type: integer
+      - description: Channel ID (for channel files)
+        in: formData
+        name: channel_id
+        type: integer
+      - description: Receiver User ID (for direct message files)
+        in: formData
+        name: receiver_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: File uploaded successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request, file too large, or validation error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Access denied - workspace/channel membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "413":
+          description: File too large
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload File
+      tags:
+      - files
+  /messages/{message_id}:
+    delete:
+      description: Delete a message (only message sender can delete)
+      parameters:
+      - description: Message ID
+        in: path
+        name: message_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid message ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Only message sender can delete
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Message
+      tags:
+      - messages
+    get:
+      description: Retrieve a specific message by ID
+      parameters:
+      - description: Message ID
+        in: path
+        name: message_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message details
+          schema:
+            $ref: '#/definitions/service.MessageResponse'
+        "400":
+          description: Invalid message ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Access denied
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Message
+      tags:
+      - messages
+    put:
+      consumes:
+      - application/json
+      description: Edit a message (only message sender can edit)
+      parameters:
+      - description: Message ID
+        in: path
+        name: message_id
+        required: true
+        type: integer
+      - description: Updated message content
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/service.EditMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Message edited successfully
+          schema:
+            $ref: '#/definitions/service.MessageResponse'
+        "400":
+          description: Invalid request or message ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Only message sender can edit
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Edit Message
+      tags:
+      - messages
+  /organizations:
+    get:
+      description: List all organizations with pagination
+      parameters:
+      - description: 'Page ID (default: 1)'
+        in: query
+        minimum: 1
+        name: page_id
+        type: integer
+      - description: 'Page size (default: 10, max: 10)'
+        in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of organizations
+          schema:
+            items:
+              $ref: '#/definitions/db.Organization'
+            type: array
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List Organizations
+      tags:
+      - organizations
+    post:
+      consumes:
+      - application/json
+      description: Create a new organization
+      parameters:
+      - description: Organization creation details
+        in: body
+        name: organization
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Organization created successfully
+          schema:
+            $ref: '#/definitions/db.Organization'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Organization name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create Organization
+      tags:
+      - organizations
+  /organizations/{id}:
+    delete:
+      description: Delete an organization (requires authentication)
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Organization deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid organization ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Organization
+      tags:
+      - organizations
+    get:
+      description: Retrieve an organization by ID
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Organization details
+          schema:
+            $ref: '#/definitions/db.Organization'
+        "400":
+          description: Invalid organization ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Organization not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Organization
+      tags:
+      - organizations
+    put:
+      consumes:
+      - application/json
+      description: Update an organization's information (requires authentication)
+      parameters:
+      - description: Organization ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Organization update details
+        in: body
+        name: organization
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateOrganizationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Organization updated successfully
+          schema:
+            $ref: '#/definitions/db.Organization'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Organization
+      tags:
+      - organizations
+  /users:
+    get:
+      description: List users in the authenticated user's organization
+      parameters:
+      - description: 'Page ID (default: 1)'
+        in: query
+        minimum: 1
+        name: page_id
+        type: integer
+      - description: 'Page size (default: 10, max: 10)'
+        in: query
+        maximum: 10
+        minimum: 5
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/service.UserResponse'
+            type: array
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Register a new user in an organization
+      parameters:
+      - description: User registration details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User created successfully
+          schema:
+            $ref: '#/definitions/service.UserResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Email already exists or invalid organization
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create User
+      tags:
+      - users
+  /users/{id}:
+    get:
+      description: Retrieve user information by ID (requires authentication)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            $ref: '#/definitions/service.UserResponse'
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Access denied - different organization
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get User
+      tags:
+      - users
+  /users/{id}/password:
+    put:
+      consumes:
+      - application/json
+      description: Change user password (users can only change their own password)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Password change details
+        in: body
+        name: passwords
+        required: true
+        schema:
+          $ref: '#/definitions/service.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Password changed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid request or wrong old password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Can only change own password
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Change Password
+      tags:
+      - users
+  /users/{id}/profile:
+    put:
+      consumes:
+      - application/json
+      description: Update user profile information (users can only update their own
+        profile)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Profile update details
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Profile updated successfully
+          schema:
+            $ref: '#/definitions/service.UserResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Can only update own profile
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: User not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Profile
+      tags:
+      - users
+  /users/{user_id}/role:
+    patch:
+      consumes:
+      - application/json
+      description: Update a user's role in their workspace (admin only, same workspace)
+      parameters:
+      - description: Target User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Role update details
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User role updated successfully
+          schema:
+            $ref: '#/definitions/service.UserResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Admin access required in same workspace
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Role
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and receive access token
+      parameters:
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful with access token
+          schema:
+            $ref: '#/definitions/service.LoginUserResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Invalid credentials
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User Login
+      tags:
+      - users
+  /workspace/{id}/activity:
+    post:
+      description: Update user's last activity timestamp (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Activity updated successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Activity
+      tags:
+      - status
+  /workspace/{id}/channels/{channel_id}/messages:
+    get:
+      description: Retrieve messages from a specific channel (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        type: integer
+      - description: 'Number of messages to retrieve (default: 50, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: 'Number of messages to skip (default: 0)'
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Channel messages
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request or IDs
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Channel Messages
+      tags:
+      - messages
+    post:
+      consumes:
+      - application/json
+      description: Send a message to a specific channel (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        type: integer
+      - description: Message content
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/service.SendChannelMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Message sent successfully
+          schema:
+            $ref: '#/definitions/service.MessageResponse'
+        "400":
+          description: Invalid request or IDs
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send Channel Message
+      tags:
+      - messages
+  /workspace/{id}/messages/direct:
+    post:
+      consumes:
+      - application/json
+      description: Send a direct message to another user (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Direct message content
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/service.SendDirectMessageRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Direct message sent successfully
+          schema:
+            $ref: '#/definitions/service.MessageResponse'
+        "400":
+          description: Invalid request or workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send Direct Message
+      tags:
+      - messages
+  /workspace/{id}/messages/direct/{user_id}:
+    get:
+      description: Retrieve direct messages with another user (requires workspace
+        membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Other User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: 'Number of messages to retrieve (default: 50, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: 'Number of messages to skip (default: 0)'
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Direct messages
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request or IDs
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Direct Messages
+      tags:
+      - messages
+  /workspace/{id}/status:
+    get:
+      description: Get all user statuses in a workspace (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Number of statuses to retrieve (default: 50, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      - description: 'Number of statuses to skip (default: 0)'
+        in: query
+        minimum: 0
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workspace user statuses
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request or workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Workspace User Statuses
+      tags:
+      - status
+    put:
+      consumes:
+      - application/json
+      description: Update user's online status in a workspace (requires workspace
+        membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Status update details
+        in: body
+        name: status
+        required: true
+        schema:
+          $ref: '#/definitions/service.UpdateUserStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Status updated successfully
+          schema:
+            $ref: '#/definitions/service.UserStatusResponse'
+        "400":
+          description: Invalid request or workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update User Status
+      tags:
+      - status
+  /workspace/{id}/status/{user_id}:
+    get:
+      description: Get a specific user's status in a workspace (requires workspace
+        membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User status information
+          schema:
+            $ref: '#/definitions/service.UserStatusResponse'
+        "400":
+          description: Invalid workspace ID or user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get User Status
+      tags:
+      - status
+  /workspaces:
+    get:
+      description: List workspaces in the authenticated user's organization
+      parameters:
+      - description: 'Page ID (default: 1)'
+        in: query
+        minimum: 1
+        name: page_id
+        type: integer
+      - description: 'Page size (default: 50, max: 50)'
+        in: query
+        maximum: 50
+        minimum: 5
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of workspaces
+          schema:
+            items:
+              $ref: '#/definitions/service.WorkspaceResponse'
+            type: array
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Workspaces
+      tags:
+      - workspaces
+    post:
+      consumes:
+      - application/json
+      description: Create a new workspace in the user's organization
+      parameters:
+      - description: Workspace creation details
+        in: body
+        name: workspace
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Workspace created successfully
+          schema:
+            $ref: '#/definitions/service.WorkspaceResponse'
+        "400":
+          description: Invalid request or foreign key violation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Workspace name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Workspace
+      tags:
+      - workspaces
+  /workspaces/{id}:
+    delete:
+      description: Delete a workspace (requires workspace admin role)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workspace deleted successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace admin access required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete Workspace
+      tags:
+      - workspaces
+    get:
+      description: Retrieve workspace information by ID
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workspace information
+          schema:
+            $ref: '#/definitions/service.WorkspaceResponse'
+        "400":
+          description: Invalid workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Workspace not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get Workspace
+      tags:
+      - workspaces
+    put:
+      consumes:
+      - application/json
+      description: Update workspace information (requires workspace admin role)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Workspace update details
+        in: body
+        name: workspace
+        required: true
+        schema:
+          $ref: '#/definitions/api.updateWorkspaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Workspace updated successfully
+          schema:
+            $ref: '#/definitions/service.WorkspaceResponse'
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace admin access required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Workspace name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update Workspace
+      tags:
+      - workspaces
+  /workspaces/{id}/channels:
+    get:
+      description: List channels in a workspace (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Page ID (default: 1)'
+        in: query
+        minimum: 1
+        name: page_id
+        type: integer
+      - description: 'Page size (default: 50, max: 50)'
+        in: query
+        maximum: 50
+        minimum: 5
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of channels
+          schema:
+            items:
+              $ref: '#/definitions/service.ChannelResponse'
+            type: array
+        "400":
+          description: Invalid request or pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Channels
+      tags:
+      - channels
+    post:
+      consumes:
+      - application/json
+      description: Create a new channel in a workspace (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel creation details
+        in: body
+        name: channel
+        required: true
+        schema:
+          $ref: '#/definitions/service.CreateChannelRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Channel created successfully
+          schema:
+            $ref: '#/definitions/service.ChannelResponse'
+        "400":
+          description: Invalid request or foreign key violation
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Channel name already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create Channel
+      tags:
+      - channels
+  /workspaces/{id}/channels/{channel_id}/typing:
+    post:
+      description: Send typing indicator to a channel (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Channel ID
+        in: path
+        name: channel_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Typing indicator sent
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid workspace ID or channel ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Send Typing Indicator
+      tags:
+      - realtime
+  /workspaces/{id}/files:
+    get:
+      description: List all files in a workspace (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 'Page number (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - description: 'Files per page (default: 20, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of files with pagination
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid workspace ID or pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List Workspace Files
+      tags:
+      - files
+  /workspaces/{id}/files/stats:
+    get:
+      description: Get file statistics for a workspace (requires workspace membership)
+      parameters:
+      - description: Workspace ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File statistics
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid workspace ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Workspace membership required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get File Statistics
+      tags:
+      - files
+  /ws:
+    get:
+      description: Establish WebSocket connection for real-time communication (requires
+        authentication)
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: WebSocket connection established
+          schema:
+            type: string
+        "400":
+          description: WebSocket upgrade failed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Authentication required
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: WebSocket Connection
+      tags:
+      - realtime
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

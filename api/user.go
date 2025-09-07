@@ -9,7 +9,17 @@ import (
 	"github.com/lib/pq"
 )
 
-// createUser creates a new user
+// @Summary Create User
+// @Description Register a new user in an organization
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body service.CreateUserRequest true "User registration details"
+// @Success 200 {object} service.UserResponse "User created successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 403 {object} map[string]string "Email already exists or invalid organization"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /users [post]
 func (server *Server) createUser(ctx *gin.Context) {
 	var req service.CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -36,7 +46,16 @@ func (server *Server) createUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// loginUser handles user login
+// @Summary User Login
+// @Description Authenticate a user and receive access token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param credentials body service.LoginUserRequest true "User login credentials"
+// @Success 200 {object} service.LoginUserResponse "Login successful with access token"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Invalid credentials"
+// @Router /users/login [post]
 func (server *Server) loginUser(ctx *gin.Context) {
 	var req service.LoginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -53,7 +72,18 @@ func (server *Server) loginUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// getUser retrieves a user by ID
+// @Summary Get User
+// @Description Retrieve user information by ID (requires authentication)
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "User ID"
+// @Success 200 {object} service.UserResponse "User information"
+// @Failure 400 {object} map[string]string "Invalid user ID"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Access denied - different organization"
+// @Failure 404 {object} map[string]string "User not found"
+// @Router /users/{id} [get]
 func (server *Server) getUser(ctx *gin.Context) {
 	var req getUserRequest
 	if err := ctx.ShouldBindUri(&req); err != nil {
@@ -90,7 +120,21 @@ func (server *Server) getUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// updateUserProfile updates a user's profile
+// @Summary Update User Profile
+// @Description Update user profile information (users can only update their own profile)
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param profile body service.UpdateUserProfileRequest true "Profile update details"
+// @Success 200 {object} service.UserResponse "Profile updated successfully"
+// @Failure 400 {object} map[string]string "Invalid request"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Can only update own profile"
+// @Failure 404 {object} map[string]string "User not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /users/{id}/profile [put]
 func (server *Server) updateUserProfile(ctx *gin.Context) {
 	var uriReq getUserRequest
 	if err := ctx.ShouldBindUri(&uriReq); err != nil {
@@ -126,7 +170,20 @@ func (server *Server) updateUserProfile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, updatedUser)
 }
 
-// changePassword changes a user's password
+// @Summary Change Password
+// @Description Change user password (users can only change their own password)
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "User ID"
+// @Param passwords body service.ChangePasswordRequest true "Password change details"
+// @Success 200 {object} map[string]string "Password changed successfully"
+// @Failure 400 {object} map[string]string "Invalid request or wrong old password"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 403 {object} map[string]string "Can only change own password"
+// @Failure 404 {object} map[string]string "User not found"
+// @Router /users/{id}/password [put]
 func (server *Server) changePassword(ctx *gin.Context) {
 	var uriReq getUserRequest
 	if err := ctx.ShouldBindUri(&uriReq); err != nil {
@@ -162,7 +219,19 @@ func (server *Server) changePassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "password changed successfully"})
 }
 
-// listUsers lists users in an organization
+// @Summary List Users
+// @Description List users in the authenticated user's organization
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Param page_id query int false "Page ID (default: 1)" minimum(1)
+// @Param page_size query int false "Page size (default: 10, max: 10)" minimum(5) maximum(10)
+// @Success 200 {array} service.UserResponse "List of users"
+// @Failure 400 {object} map[string]string "Invalid pagination parameters"
+// @Failure 401 {object} map[string]string "Authentication required"
+// @Failure 404 {object} map[string]string "User not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /users [get]
 func (server *Server) listUsers(ctx *gin.Context) {
 	var req listUsersRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
