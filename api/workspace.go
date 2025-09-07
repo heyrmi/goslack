@@ -70,6 +70,14 @@ func (server *Server) listWorkspaces(ctx *gin.Context) {
 		return
 	}
 
+	// Set default values if not provided
+	if req.PageID == 0 {
+		req.PageID = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 50
+	}
+
 	// Get current user from context
 	currentUser, exists := ctx.Get(currentUserKey)
 	if !exists {
@@ -145,8 +153,8 @@ type getWorkspaceRequest struct {
 }
 
 type listWorkspacesRequest struct {
-	PageID   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
+	PageID   int32 `form:"page_id" binding:"omitempty,min=1"`
+	PageSize int32 `form:"page_size" binding:"omitempty,min=5,max=50"`
 }
 
 type updateWorkspaceRequest struct {

@@ -12,15 +12,23 @@ import (
 type Querier interface {
 	AddChannelMember(ctx context.Context, arg AddChannelMemberParams) (ChannelMember, error)
 	CheckChannelMembership(ctx context.Context, arg CheckChannelMembershipParams) (string, error)
+	// Check if user has access to file through direct ownership, channel membership, or direct share
+	CheckFileAccess(ctx context.Context, arg CheckFileAccessParams) (bool, error)
 	CheckMessageAuthor(ctx context.Context, id int64) (int64, error)
 	CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error)
+	CleanupIncompleteUploads(ctx context.Context) error
 	CreateChannel(ctx context.Context, arg CreateChannelParams) (Channel, error)
 	CreateChannelMessage(ctx context.Context, arg CreateChannelMessageParams) (Message, error)
 	CreateDirectMessage(ctx context.Context, arg CreateDirectMessageParams) (Message, error)
+	CreateFile(ctx context.Context, arg CreateFileParams) (File, error)
+	CreateFileShare(ctx context.Context, arg CreateFileShareParams) (FileShare, error)
+	CreateMessageFile(ctx context.Context, arg CreateMessageFileParams) (MessageFile, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams) (Workspace, error)
 	DeleteChannel(ctx context.Context, id int64) error
+	DeleteFile(ctx context.Context, arg DeleteFileParams) error
+	DeleteMessageFile(ctx context.Context, arg DeleteMessageFileParams) error
 	DeleteOrganization(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteWorkspace(ctx context.Context, id int64) error
@@ -30,7 +38,15 @@ type Querier interface {
 	GetChannelMessages(ctx context.Context, arg GetChannelMessagesParams) ([]GetChannelMessagesRow, error)
 	GetChannelWithCreator(ctx context.Context, id int64) (GetChannelWithCreatorRow, error)
 	GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDirectMessagesBetweenUsersParams) ([]GetDirectMessagesBetweenUsersRow, error)
+	GetDuplicateFiles(ctx context.Context, workspaceID int64) ([]GetDuplicateFilesRow, error)
+	GetFile(ctx context.Context, id int64) (File, error)
+	GetFileByHash(ctx context.Context, arg GetFileByHashParams) (File, error)
+	GetFileMessages(ctx context.Context, fileID int64) ([]GetFileMessagesRow, error)
+	GetFileShares(ctx context.Context, fileID int64) ([]GetFileSharesRow, error)
+	GetFileStats(ctx context.Context, workspaceID int64) (GetFileStatsRow, error)
+	GetFileWithPermissionCheck(ctx context.Context, arg GetFileWithPermissionCheckParams) (GetFileWithPermissionCheckRow, error)
 	GetMessageByID(ctx context.Context, id int64) (GetMessageByIDRow, error)
+	GetMessageFiles(ctx context.Context, messageID int64) ([]GetMessageFilesRow, error)
 	GetOnlineUsersInWorkspace(ctx context.Context, workspaceID int64) ([]GetOnlineUsersInWorkspaceRow, error)
 	GetOrganization(ctx context.Context, id int64) (Organization, error)
 	GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentWorkspaceMessagesParams) ([]GetRecentWorkspaceMessagesRow, error)
@@ -47,12 +63,16 @@ type Querier interface {
 	ListChannelsByWorkspace(ctx context.Context, arg ListChannelsByWorkspaceParams) ([]Channel, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListPublicChannelsByWorkspace(ctx context.Context, arg ListPublicChannelsByWorkspaceParams) ([]Channel, error)
+	ListUserFiles(ctx context.Context, arg ListUserFilesParams) ([]ListUserFilesRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	ListWorkspaceFiles(ctx context.Context, arg ListWorkspaceFilesParams) ([]ListWorkspaceFilesRow, error)
 	ListWorkspacesByOrganization(ctx context.Context, arg ListWorkspacesByOrganizationParams) ([]Workspace, error)
 	RemoveChannelMember(ctx context.Context, arg RemoveChannelMemberParams) error
 	SetUsersOfflineAfterInactivity(ctx context.Context, lastActivityAt time.Time) error
 	SoftDeleteMessage(ctx context.Context, id int64) error
 	UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error)
+	UpdateFileThumbnail(ctx context.Context, arg UpdateFileThumbnailParams) error
+	UpdateFileUploadStatus(ctx context.Context, arg UpdateFileUploadStatusParams) error
 	UpdateLastActivity(ctx context.Context, arg UpdateLastActivityParams) error
 	UpdateMessageContent(ctx context.Context, arg UpdateMessageContentParams) (Message, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)

@@ -16,6 +16,7 @@ func createRandomChannelMessage(t *testing.T, workspace Workspace, channel Chann
 		ChannelID:   sql.NullInt64{Int64: channel.ID, Valid: true},
 		SenderID:    sender.ID,
 		Content:     util.RandomString(50),
+		ContentType: "text",
 	}
 
 	message, err := testQueries.CreateChannelMessage(context.Background(), arg)
@@ -42,6 +43,7 @@ func createRandomDirectMessage(t *testing.T, workspace Workspace, sender User, r
 		SenderID:    sender.ID,
 		ReceiverID:  sql.NullInt64{Int64: receiver.ID, Valid: true},
 		Content:     util.RandomString(50),
+		ContentType: "text",
 	}
 
 	message, err := testQueries.CreateDirectMessage(context.Background(), arg)
@@ -343,6 +345,7 @@ func TestMessageWithThreading(t *testing.T) {
 		ChannelID:   sql.NullInt64{Int64: channel.ID, Valid: true},
 		SenderID:    user.ID,
 		Content:     "Reply to parent message",
+		ContentType: "text",
 	}
 
 	replyMessage, err := testQueries.CreateChannelMessage(context.Background(), arg)
@@ -371,6 +374,7 @@ func TestMessageContentValidation(t *testing.T) {
 		ChannelID:   sql.NullInt64{Int64: channel.ID, Valid: true},
 		SenderID:    user.ID,
 		Content:     longContent,
+		ContentType: "text",
 	}
 
 	message, err := testQueries.CreateChannelMessage(context.Background(), arg)

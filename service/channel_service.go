@@ -188,6 +188,13 @@ func (s *ChannelService) CheckChannelAccess(ctx context.Context, userID, channel
 	return nil
 }
 
+// UserHasChannelAccess checks if a user has access to a channel (returns boolean)
+func (s *ChannelService) UserHasChannelAccess(userID, channelID int64) bool {
+	ctx := context.Background()
+	err := s.CheckChannelAccess(ctx, userID, channelID)
+	return err == nil
+}
+
 // toChannelResponse converts a db.Channel to ChannelResponse
 func (s *ChannelService) toChannelResponse(channel db.Channel) ChannelResponse {
 	return ChannelResponse{

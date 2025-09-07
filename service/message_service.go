@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	db "github.com/heyrmi/goslack/db/sqlc"
 )
@@ -13,13 +14,15 @@ import (
 type MessageService struct {
 	store       db.Store
 	userService *UserService
+	hub         WebSocketHub // Interface for WebSocket hub
 }
 
 // NewMessageService creates a new message service
-func NewMessageService(store db.Store, userService *UserService) *MessageService {
+func NewMessageService(store db.Store, userService *UserService, hub WebSocketHub) *MessageService {
 	return &MessageService{
 		store:       store,
 		userService: userService,
+		hub:         hub,
 	}
 }
 
@@ -47,12 +50,30 @@ func (s *MessageService) SendChannelMessage(ctx context.Context, workspaceID, ch
 		return nil, fmt.Errorf("failed to create channel message: %w", err)
 	}
 
-	return s.toMessageResponse(ctx, message)
+	messageResponse, err := s.toMessageResponse(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast to WebSocket clients if hub is available
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_sent",
+			Data:        messageResponse,
+			WorkspaceID: workspaceID,
+			ChannelID:   &channelID,
+			UserID:      senderID,
+			Timestamp:   time.Now(),
+		}
+		s.hub.BroadcastToChannel(workspaceID, channelID, wsMessage)
+	}
+
+	return messageResponse, nil
 }
 
 // SendDirectMessage sends a direct message between two users
 func (s *MessageService) SendDirectMessage(ctx context.Context, workspaceID, senderID, receiverID int64, content string) (*MessageResponse, error) {
-	// Verify both users are workspace members
+	// Verify both sender and receiver are workspace members
 	isSenderMember, err := s.userService.IsWorkspaceMember(ctx, senderID, workspaceID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check sender workspace membership: %w", err)
@@ -82,7 +103,25 @@ func (s *MessageService) SendDirectMessage(ctx context.Context, workspaceID, sen
 		return nil, fmt.Errorf("failed to create direct message: %w", err)
 	}
 
-	return s.toMessageResponse(ctx, message)
+	messageResponse, err := s.toMessageResponse(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast to WebSocket clients (send to both sender and receiver)
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_sent",
+			Data:        messageResponse,
+			WorkspaceID: workspaceID,
+			UserID:      senderID,
+			Timestamp:   time.Now(),
+		}
+		s.hub.BroadcastToUser(senderID, wsMessage)
+		s.hub.BroadcastToUser(receiverID, wsMessage)
+	}
+
+	return messageResponse, nil
 }
 
 // GetChannelMessages retrieves messages from a channel with pagination
@@ -174,7 +213,33 @@ func (s *MessageService) EditMessage(ctx context.Context, messageID, userID int6
 		return nil, fmt.Errorf("failed to update message: %w", err)
 	}
 
-	return s.toMessageResponse(ctx, message)
+	messageResponse, err := s.toMessageResponse(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast edit to WebSocket clients
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_edited",
+			Data:        messageResponse,
+			WorkspaceID: message.WorkspaceID,
+			UserID:      userID,
+			Timestamp:   time.Now(),
+		}
+
+		if message.ChannelID.Valid {
+			channelID := message.ChannelID.Int64
+			wsMessage.ChannelID = &channelID
+			s.hub.BroadcastToChannel(message.WorkspaceID, channelID, wsMessage)
+		} else if message.ReceiverID.Valid {
+			// Direct message - broadcast to both sender and receiver
+			s.hub.BroadcastToUser(message.SenderID, wsMessage)
+			s.hub.BroadcastToUser(message.ReceiverID.Int64, wsMessage)
+		}
+	}
+
+	return messageResponse, nil
 }
 
 // DeleteMessage soft deletes a message (by author or workspace admin)
@@ -209,6 +274,27 @@ func (s *MessageService) DeleteMessage(ctx context.Context, messageID, userID in
 	err = s.store.SoftDeleteMessage(ctx, messageID)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)
+	}
+
+	// Broadcast deletion to WebSocket clients
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_deleted",
+			Data:        map[string]interface{}{"message_id": messageID},
+			WorkspaceID: message.WorkspaceID,
+			UserID:      userID,
+			Timestamp:   time.Now(),
+		}
+
+		if message.ChannelID.Valid {
+			channelID := message.ChannelID.Int64
+			wsMessage.ChannelID = &channelID
+			s.hub.BroadcastToChannel(message.WorkspaceID, channelID, wsMessage)
+		} else if message.ReceiverID.Valid {
+			// Direct message - broadcast to both sender and receiver
+			s.hub.BroadcastToUser(message.SenderID, wsMessage)
+			s.hub.BroadcastToUser(message.ReceiverID.Int64, wsMessage)
+		}
 	}
 
 	return nil
@@ -251,6 +337,7 @@ func (s *MessageService) GetMessage(ctx context.Context, messageID, userID int64
 
 // Helper function to convert db message to response with sender info
 func (s *MessageService) toMessageResponse(ctx context.Context, message db.Message) (*MessageResponse, error) {
+	// Get sender information
 	sender, err := s.userService.GetUser(ctx, message.SenderID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sender info: %w", err)
@@ -399,4 +486,191 @@ func (s *MessageService) toMessageByIDResponse(message db.GetMessageByIDRow) *Me
 	}
 
 	return response
+}
+
+// CreateChannelMessage creates a new channel message (with optional file attachment)
+func (s *MessageService) CreateChannelMessage(req CreateChannelMessageRequest, senderID int64) (*MessageResponse, error) {
+	// Verify sender is a workspace member
+	ctx := context.Background()
+	isMember, err := s.userService.IsWorkspaceMember(ctx, senderID, req.WorkspaceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check workspace membership: %w", err)
+	}
+	if !isMember {
+		return nil, errors.New("sender is not a member of the workspace")
+	}
+
+	// Create the message
+	createMessageParams := db.CreateChannelMessageParams{
+		WorkspaceID: req.WorkspaceID,
+		ChannelID:   sql.NullInt64{Int64: req.ChannelID, Valid: true},
+		SenderID:    senderID,
+		Content:     req.Content,
+		ContentType: req.ContentType,
+	}
+
+	message, err := s.store.CreateChannelMessage(ctx, createMessageParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create channel message: %w", err)
+	}
+
+	// If file is attached, create message-file relationship
+	if req.FileID != nil {
+		_, err = s.store.CreateMessageFile(ctx, db.CreateMessageFileParams{
+			MessageID: message.ID,
+			FileID:    *req.FileID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to link file to message: %w", err)
+		}
+	}
+
+	// Build response
+	messageResponse, err := s.toMessageResponse(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add file information if present
+	if req.FileID != nil {
+		files, err := s.store.GetMessageFiles(ctx, message.ID)
+		if err == nil && len(files) > 0 {
+			fileResponses := make([]*FileResponse, len(files))
+			for i, file := range files {
+				fileResponses[i] = &FileResponse{
+					ID:               file.ID,
+					OriginalFilename: file.OriginalFilename,
+					FileSize:         file.FileSize,
+					MimeType:         file.MimeType,
+					DownloadURL:      fmt.Sprintf("/api/files/%d/download", file.ID),
+					CreatedAt:        file.CreatedAt,
+					IsPublic:         file.IsPublic,
+					Uploader: UserResponse{
+						ID:        file.UploaderID,
+						Email:     file.UploaderEmail,
+						FirstName: file.UploaderFirstName,
+						LastName:  file.UploaderLastName,
+					},
+				}
+
+				if file.ThumbnailPath.Valid {
+					fileResponses[i].ThumbnailURL = fmt.Sprintf("/api/files/%d/thumbnail", file.ID)
+				}
+			}
+			messageResponse.Files = fileResponses
+		}
+	}
+
+	// Broadcast to WebSocket clients if hub is available
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_sent",
+			Data:        messageResponse,
+			WorkspaceID: req.WorkspaceID,
+			ChannelID:   &req.ChannelID,
+			UserID:      senderID,
+			Timestamp:   time.Now(),
+		}
+		s.hub.BroadcastToChannel(req.WorkspaceID, req.ChannelID, wsMessage)
+	}
+
+	return messageResponse, nil
+}
+
+// CreateDirectMessage creates a new direct message (with optional file attachment)
+func (s *MessageService) CreateDirectMessage(req CreateDirectMessageRequest, senderID int64) (*MessageResponse, error) {
+	// Verify sender is a workspace member
+	ctx := context.Background()
+	isMember, err := s.userService.IsWorkspaceMember(ctx, senderID, req.WorkspaceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check sender workspace membership: %w", err)
+	}
+	if !isMember {
+		return nil, errors.New("sender is not a member of the workspace")
+	}
+
+	// Verify receiver is a workspace member
+	isReceiverMember, err := s.userService.IsWorkspaceMember(ctx, req.ReceiverID, req.WorkspaceID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check receiver workspace membership: %w", err)
+	}
+	if !isReceiverMember {
+		return nil, errors.New("receiver is not a member of the workspace")
+	}
+
+	// Create the message
+	createMessageParams := db.CreateDirectMessageParams{
+		WorkspaceID: req.WorkspaceID,
+		SenderID:    senderID,
+		ReceiverID:  sql.NullInt64{Int64: req.ReceiverID, Valid: true},
+		Content:     req.Content,
+		ContentType: req.ContentType,
+	}
+
+	message, err := s.store.CreateDirectMessage(ctx, createMessageParams)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create direct message: %w", err)
+	}
+
+	// If file is attached, create message-file relationship
+	if req.FileID != nil {
+		_, err = s.store.CreateMessageFile(ctx, db.CreateMessageFileParams{
+			MessageID: message.ID,
+			FileID:    *req.FileID,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to link file to message: %w", err)
+		}
+	}
+
+	// Build response
+	messageResponse, err := s.toMessageResponse(ctx, message)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add file information if present
+	if req.FileID != nil {
+		files, err := s.store.GetMessageFiles(ctx, message.ID)
+		if err == nil && len(files) > 0 {
+			fileResponses := make([]*FileResponse, len(files))
+			for i, file := range files {
+				fileResponses[i] = &FileResponse{
+					ID:               file.ID,
+					OriginalFilename: file.OriginalFilename,
+					FileSize:         file.FileSize,
+					MimeType:         file.MimeType,
+					DownloadURL:      fmt.Sprintf("/api/files/%d/download", file.ID),
+					CreatedAt:        file.CreatedAt,
+					IsPublic:         file.IsPublic,
+					Uploader: UserResponse{
+						ID:        file.UploaderID,
+						Email:     file.UploaderEmail,
+						FirstName: file.UploaderFirstName,
+						LastName:  file.UploaderLastName,
+					},
+				}
+
+				if file.ThumbnailPath.Valid {
+					fileResponses[i].ThumbnailURL = fmt.Sprintf("/api/files/%d/thumbnail", file.ID)
+				}
+			}
+			messageResponse.Files = fileResponses
+		}
+	}
+
+	// Broadcast to WebSocket clients (send to both sender and receiver)
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "message_sent",
+			Data:        messageResponse,
+			WorkspaceID: req.WorkspaceID,
+			UserID:      senderID,
+			Timestamp:   time.Now(),
+		}
+		s.hub.BroadcastToUser(senderID, wsMessage)
+		s.hub.BroadcastToUser(req.ReceiverID, wsMessage)
+	}
+
+	return messageResponse, nil
 }

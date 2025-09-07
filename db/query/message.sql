@@ -4,9 +4,10 @@ INSERT INTO messages (
     channel_id,
     sender_id,
     content,
+    content_type,
     message_type
 ) VALUES (
-    $1, $2, $3, $4, 'channel'
+    $1, $2, $3, $4, $5, 'channel'
 )
 RETURNING *;
 
@@ -16,9 +17,10 @@ INSERT INTO messages (
     sender_id,
     receiver_id,
     content,
+    content_type,
     message_type
 ) VALUES (
-    $1, $2, $3, $4, 'direct'
+    $1, $2, $3, $4, $5, 'direct'
 )
 RETURNING *;
 

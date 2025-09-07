@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/service"
@@ -22,6 +24,8 @@ type Server struct {
 	channelService      *service.ChannelService
 	messageService      *service.MessageService
 	statusService       *service.StatusService
+	fileService         *service.FileService
+	hub                 *Hub // WebSocket hub
 }
 
 // NewServer creates a new HTTP server and set up routing.
@@ -31,12 +35,16 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 
+	// Create WebSocket hub
+	hub := NewHub(config)
+
 	userService := service.NewUserService(store, tokenMaker, config)
 	organizationService := service.NewOrganizationService(store)
 	workspaceService := service.NewWorkspaceService(store, userService)
 	channelService := service.NewChannelService(store, userService, workspaceService)
-	messageService := service.NewMessageService(store, userService)
-	statusService := service.NewStatusService(store)
+	messageService := service.NewMessageService(store, userService, hub) // Pass hub to message service
+	statusService := service.NewStatusService(store, hub)                // Pass hub to status service
+	fileService := service.NewFileService(store, config)                 // Add file service
 
 	server := &Server{
 		config:              config,
@@ -48,6 +56,8 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		channelService:      channelService,
 		messageService:      messageService,
 		statusService:       statusService,
+		fileService:         fileService,
+		hub:                 hub,
 	}
 
 	server.setupRouter()
@@ -56,6 +66,17 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+
+	// Configure CORS middleware
+	config := cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}
+	router.Use(cors.New(config))
 
 	// Public routes (no authentication required)
 	router.POST("/organizations", server.createOrganization)
@@ -75,6 +96,9 @@ func (server *Server) setupRouter() {
 
 	// Protected routes with user context
 	authWithUserRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService))
+
+	// WebSocket endpoint
+	authWithUserRoutes.GET("/ws", server.handleWebSocket)
 
 	// Workspace routes (no workspace-specific auth needed)
 	authWithUserRoutes.POST("/workspaces", server.createWorkspace)
@@ -112,11 +136,26 @@ func (server *Server) setupRouter() {
 	authWithUserRoutes.GET("/workspace/:id/status", requireWorkspaceMember(server.userService), server.getWorkspaceUserStatuses)
 	authWithUserRoutes.POST("/workspace/:id/activity", requireWorkspaceMember(server.userService), server.updateUserActivity)
 
+	// Typing indicator endpoint
+	authWithUserRoutes.POST("/workspaces/:id/channels/:channel_id/typing", requireWorkspaceMember(server.userService), server.handleTyping)
+
+	// File routes
+	authWithUserRoutes.POST("/files/upload", server.uploadFile)
+	authWithUserRoutes.GET("/files/:id", server.getFile)
+	authWithUserRoutes.GET("/files/:id/download", server.downloadFile)
+	authWithUserRoutes.DELETE("/files/:id", server.deleteFile)
+	authWithUserRoutes.GET("/workspaces/:id/files", requireWorkspaceMember(server.userService), server.listWorkspaceFiles)
+	authWithUserRoutes.GET("/workspaces/:id/files/stats", requireWorkspaceMember(server.userService), server.getFileStats)
+	authWithUserRoutes.POST("/files/message", server.sendFileMessage)
+
 	server.router = router
 }
 
 // Start runs the HTTP server on a specific address.
 func (server *Server) Start(address string) error {
+	// Start the WebSocket hub in a separate goroutine
+	go server.hub.Run()
+
 	return server.router.Run(address)
 }
 

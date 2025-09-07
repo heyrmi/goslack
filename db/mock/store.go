@@ -66,6 +66,21 @@ func (mr *MockStoreMockRecorder) CheckChannelMembership(arg0, arg1 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckChannelMembership", reflect.TypeOf((*MockStore)(nil).CheckChannelMembership), arg0, arg1)
 }
 
+// CheckFileAccess mocks base method.
+func (m *MockStore) CheckFileAccess(arg0 context.Context, arg1 db.CheckFileAccessParams) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckFileAccess", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckFileAccess indicates an expected call of CheckFileAccess.
+func (mr *MockStoreMockRecorder) CheckFileAccess(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckFileAccess", reflect.TypeOf((*MockStore)(nil).CheckFileAccess), arg0, arg1)
+}
+
 // CheckMessageAuthor mocks base method.
 func (m *MockStore) CheckMessageAuthor(arg0 context.Context, arg1 int64) (int64, error) {
 	m.ctrl.T.Helper()
@@ -94,6 +109,20 @@ func (m *MockStore) CheckUserWorkspaceRole(arg0 context.Context, arg1 db.CheckUs
 func (mr *MockStoreMockRecorder) CheckUserWorkspaceRole(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUserWorkspaceRole", reflect.TypeOf((*MockStore)(nil).CheckUserWorkspaceRole), arg0, arg1)
+}
+
+// CleanupIncompleteUploads mocks base method.
+func (m *MockStore) CleanupIncompleteUploads(arg0 context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanupIncompleteUploads", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanupIncompleteUploads indicates an expected call of CleanupIncompleteUploads.
+func (mr *MockStoreMockRecorder) CleanupIncompleteUploads(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupIncompleteUploads", reflect.TypeOf((*MockStore)(nil).CleanupIncompleteUploads), arg0)
 }
 
 // CreateChannel mocks base method.
@@ -139,6 +168,51 @@ func (m *MockStore) CreateDirectMessage(arg0 context.Context, arg1 db.CreateDire
 func (mr *MockStoreMockRecorder) CreateDirectMessage(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDirectMessage", reflect.TypeOf((*MockStore)(nil).CreateDirectMessage), arg0, arg1)
+}
+
+// CreateFile mocks base method.
+func (m *MockStore) CreateFile(arg0 context.Context, arg1 db.CreateFileParams) (db.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFile", arg0, arg1)
+	ret0, _ := ret[0].(db.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFile indicates an expected call of CreateFile.
+func (mr *MockStoreMockRecorder) CreateFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFile", reflect.TypeOf((*MockStore)(nil).CreateFile), arg0, arg1)
+}
+
+// CreateFileShare mocks base method.
+func (m *MockStore) CreateFileShare(arg0 context.Context, arg1 db.CreateFileShareParams) (db.FileShare, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFileShare", arg0, arg1)
+	ret0, _ := ret[0].(db.FileShare)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateFileShare indicates an expected call of CreateFileShare.
+func (mr *MockStoreMockRecorder) CreateFileShare(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFileShare", reflect.TypeOf((*MockStore)(nil).CreateFileShare), arg0, arg1)
+}
+
+// CreateMessageFile mocks base method.
+func (m *MockStore) CreateMessageFile(arg0 context.Context, arg1 db.CreateMessageFileParams) (db.MessageFile, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateMessageFile", arg0, arg1)
+	ret0, _ := ret[0].(db.MessageFile)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateMessageFile indicates an expected call of CreateMessageFile.
+func (mr *MockStoreMockRecorder) CreateMessageFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessageFile", reflect.TypeOf((*MockStore)(nil).CreateMessageFile), arg0, arg1)
 }
 
 // CreateOrganization mocks base method.
@@ -198,6 +272,34 @@ func (m *MockStore) DeleteChannel(arg0 context.Context, arg1 int64) error {
 func (mr *MockStoreMockRecorder) DeleteChannel(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChannel", reflect.TypeOf((*MockStore)(nil).DeleteChannel), arg0, arg1)
+}
+
+// DeleteFile mocks base method.
+func (m *MockStore) DeleteFile(arg0 context.Context, arg1 db.DeleteFileParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFile", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFile indicates an expected call of DeleteFile.
+func (mr *MockStoreMockRecorder) DeleteFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFile", reflect.TypeOf((*MockStore)(nil).DeleteFile), arg0, arg1)
+}
+
+// DeleteMessageFile mocks base method.
+func (m *MockStore) DeleteMessageFile(arg0 context.Context, arg1 db.DeleteMessageFileParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMessageFile", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteMessageFile indicates an expected call of DeleteMessageFile.
+func (mr *MockStoreMockRecorder) DeleteMessageFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessageFile", reflect.TypeOf((*MockStore)(nil).DeleteMessageFile), arg0, arg1)
 }
 
 // DeleteOrganization mocks base method.
@@ -332,6 +434,111 @@ func (mr *MockStoreMockRecorder) GetDirectMessagesBetweenUsers(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDirectMessagesBetweenUsers", reflect.TypeOf((*MockStore)(nil).GetDirectMessagesBetweenUsers), arg0, arg1)
 }
 
+// GetDuplicateFiles mocks base method.
+func (m *MockStore) GetDuplicateFiles(arg0 context.Context, arg1 int64) ([]db.GetDuplicateFilesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDuplicateFiles", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetDuplicateFilesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDuplicateFiles indicates an expected call of GetDuplicateFiles.
+func (mr *MockStoreMockRecorder) GetDuplicateFiles(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateFiles", reflect.TypeOf((*MockStore)(nil).GetDuplicateFiles), arg0, arg1)
+}
+
+// GetFile mocks base method.
+func (m *MockStore) GetFile(arg0 context.Context, arg1 int64) (db.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFile", arg0, arg1)
+	ret0, _ := ret[0].(db.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFile indicates an expected call of GetFile.
+func (mr *MockStoreMockRecorder) GetFile(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFile", reflect.TypeOf((*MockStore)(nil).GetFile), arg0, arg1)
+}
+
+// GetFileByHash mocks base method.
+func (m *MockStore) GetFileByHash(arg0 context.Context, arg1 db.GetFileByHashParams) (db.File, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileByHash", arg0, arg1)
+	ret0, _ := ret[0].(db.File)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileByHash indicates an expected call of GetFileByHash.
+func (mr *MockStoreMockRecorder) GetFileByHash(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileByHash", reflect.TypeOf((*MockStore)(nil).GetFileByHash), arg0, arg1)
+}
+
+// GetFileMessages mocks base method.
+func (m *MockStore) GetFileMessages(arg0 context.Context, arg1 int64) ([]db.GetFileMessagesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileMessages", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetFileMessagesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileMessages indicates an expected call of GetFileMessages.
+func (mr *MockStoreMockRecorder) GetFileMessages(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileMessages", reflect.TypeOf((*MockStore)(nil).GetFileMessages), arg0, arg1)
+}
+
+// GetFileShares mocks base method.
+func (m *MockStore) GetFileShares(arg0 context.Context, arg1 int64) ([]db.GetFileSharesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileShares", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetFileSharesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileShares indicates an expected call of GetFileShares.
+func (mr *MockStoreMockRecorder) GetFileShares(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileShares", reflect.TypeOf((*MockStore)(nil).GetFileShares), arg0, arg1)
+}
+
+// GetFileStats mocks base method.
+func (m *MockStore) GetFileStats(arg0 context.Context, arg1 int64) (db.GetFileStatsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileStats", arg0, arg1)
+	ret0, _ := ret[0].(db.GetFileStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileStats indicates an expected call of GetFileStats.
+func (mr *MockStoreMockRecorder) GetFileStats(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileStats", reflect.TypeOf((*MockStore)(nil).GetFileStats), arg0, arg1)
+}
+
+// GetFileWithPermissionCheck mocks base method.
+func (m *MockStore) GetFileWithPermissionCheck(arg0 context.Context, arg1 db.GetFileWithPermissionCheckParams) (db.GetFileWithPermissionCheckRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFileWithPermissionCheck", arg0, arg1)
+	ret0, _ := ret[0].(db.GetFileWithPermissionCheckRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFileWithPermissionCheck indicates an expected call of GetFileWithPermissionCheck.
+func (mr *MockStoreMockRecorder) GetFileWithPermissionCheck(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileWithPermissionCheck", reflect.TypeOf((*MockStore)(nil).GetFileWithPermissionCheck), arg0, arg1)
+}
+
 // GetMessageByID mocks base method.
 func (m *MockStore) GetMessageByID(arg0 context.Context, arg1 int64) (db.GetMessageByIDRow, error) {
 	m.ctrl.T.Helper()
@@ -345,6 +552,21 @@ func (m *MockStore) GetMessageByID(arg0 context.Context, arg1 int64) (db.GetMess
 func (mr *MockStoreMockRecorder) GetMessageByID(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageByID", reflect.TypeOf((*MockStore)(nil).GetMessageByID), arg0, arg1)
+}
+
+// GetMessageFiles mocks base method.
+func (m *MockStore) GetMessageFiles(arg0 context.Context, arg1 int64) ([]db.GetMessageFilesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMessageFiles", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetMessageFilesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMessageFiles indicates an expected call of GetMessageFiles.
+func (mr *MockStoreMockRecorder) GetMessageFiles(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageFiles", reflect.TypeOf((*MockStore)(nil).GetMessageFiles), arg0, arg1)
 }
 
 // GetOnlineUsersInWorkspace mocks base method.
@@ -587,6 +809,21 @@ func (mr *MockStoreMockRecorder) ListPublicChannelsByWorkspace(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPublicChannelsByWorkspace", reflect.TypeOf((*MockStore)(nil).ListPublicChannelsByWorkspace), arg0, arg1)
 }
 
+// ListUserFiles mocks base method.
+func (m *MockStore) ListUserFiles(arg0 context.Context, arg1 db.ListUserFilesParams) ([]db.ListUserFilesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUserFiles", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListUserFilesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUserFiles indicates an expected call of ListUserFiles.
+func (mr *MockStoreMockRecorder) ListUserFiles(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUserFiles", reflect.TypeOf((*MockStore)(nil).ListUserFiles), arg0, arg1)
+}
+
 // ListUsers mocks base method.
 func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]db.User, error) {
 	m.ctrl.T.Helper()
@@ -600,6 +837,21 @@ func (m *MockStore) ListUsers(arg0 context.Context, arg1 db.ListUsersParams) ([]
 func (mr *MockStoreMockRecorder) ListUsers(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockStore)(nil).ListUsers), arg0, arg1)
+}
+
+// ListWorkspaceFiles mocks base method.
+func (m *MockStore) ListWorkspaceFiles(arg0 context.Context, arg1 db.ListWorkspaceFilesParams) ([]db.ListWorkspaceFilesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListWorkspaceFiles", arg0, arg1)
+	ret0, _ := ret[0].([]db.ListWorkspaceFilesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListWorkspaceFiles indicates an expected call of ListWorkspaceFiles.
+func (mr *MockStoreMockRecorder) ListWorkspaceFiles(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListWorkspaceFiles", reflect.TypeOf((*MockStore)(nil).ListWorkspaceFiles), arg0, arg1)
 }
 
 // ListWorkspacesByOrganization mocks base method.
@@ -672,6 +924,34 @@ func (m *MockStore) UpdateChannel(arg0 context.Context, arg1 db.UpdateChannelPar
 func (mr *MockStoreMockRecorder) UpdateChannel(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateChannel", reflect.TypeOf((*MockStore)(nil).UpdateChannel), arg0, arg1)
+}
+
+// UpdateFileThumbnail mocks base method.
+func (m *MockStore) UpdateFileThumbnail(arg0 context.Context, arg1 db.UpdateFileThumbnailParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFileThumbnail", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFileThumbnail indicates an expected call of UpdateFileThumbnail.
+func (mr *MockStoreMockRecorder) UpdateFileThumbnail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileThumbnail", reflect.TypeOf((*MockStore)(nil).UpdateFileThumbnail), arg0, arg1)
+}
+
+// UpdateFileUploadStatus mocks base method.
+func (m *MockStore) UpdateFileUploadStatus(arg0 context.Context, arg1 db.UpdateFileUploadStatusParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFileUploadStatus", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFileUploadStatus indicates an expected call of UpdateFileUploadStatus.
+func (mr *MockStoreMockRecorder) UpdateFileUploadStatus(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFileUploadStatus", reflect.TypeOf((*MockStore)(nil).UpdateFileUploadStatus), arg0, arg1)
 }
 
 // UpdateLastActivity mocks base method.

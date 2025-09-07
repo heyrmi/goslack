@@ -270,6 +270,16 @@ func (s *UserService) IsWorkspaceMember(ctx context.Context, userID, workspaceID
 	return role == "admin" || role == "member", nil
 }
 
+// UserBelongsToWorkspace checks if a user belongs to a workspace (for backward compatibility)
+func (s *UserService) UserBelongsToWorkspace(userID, workspaceID int64) bool {
+	ctx := context.Background()
+	isMember, err := s.IsWorkspaceMember(ctx, userID, workspaceID)
+	if err != nil {
+		return false
+	}
+	return isMember
+}
+
 // toUserResponse converts a db.User to UserResponse (removes sensitive data)
 func (s *UserService) toUserResponse(user db.User) UserResponse {
 	var workspaceID *int64

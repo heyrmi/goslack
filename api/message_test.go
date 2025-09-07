@@ -372,7 +372,7 @@ func TestGetChannelMessagesAPI(t *testing.T) {
 		},
 		{
 			name:  "InvalidLimit",
-			query: "?limit=0&offset=0", // Invalid limit
+			query: "?limit=-1&offset=0", // Invalid limit
 			setupAuth: func(t *testing.T, request *http.Request, tokenMaker token.Maker) {
 				addAuthorization(t, request, tokenMaker, authorizationTypeBearer, user.Email, time.Minute)
 			},

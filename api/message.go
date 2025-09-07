@@ -83,6 +83,14 @@ func (server *Server) getChannelMessages(ctx *gin.Context) {
 		return
 	}
 
+	// Set default values if not provided
+	if req.Limit == 0 {
+		req.Limit = 50 // Default to 50 messages
+	}
+	if req.Offset < 0 {
+		req.Offset = 0
+	}
+
 	// Get workspace ID from URL
 	workspaceIDStr := ctx.Param("id")
 	workspaceID, err := strconv.ParseInt(workspaceIDStr, 10, 64)
@@ -118,6 +126,14 @@ func (server *Server) getDirectMessages(ctx *gin.Context) {
 	if err := ctx.ShouldBindQuery(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
+	}
+
+	// Set default values if not provided
+	if req.Limit == 0 {
+		req.Limit = 50 // Default to 50 messages
+	}
+	if req.Offset < 0 {
+		req.Offset = 0
 	}
 
 	// Get workspace ID from URL

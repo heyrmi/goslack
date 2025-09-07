@@ -63,3 +63,8 @@ func RandomOrganizationName() string {
 func RandomBool() bool {
 	return rand.Intn(2) == 1
 }
+
+// IntToString converts an int64 to string
+func IntToString(i int64) string {
+	return fmt.Sprintf("%d", i)
+}

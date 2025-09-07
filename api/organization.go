@@ -83,6 +83,14 @@ func (server *Server) listOrganizations(ctx *gin.Context) {
 		return
 	}
 
+	// Set default values if not provided
+	if req.PageID == 0 {
+		req.PageID = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 10
+	}
+
 	organizations, err := server.organizationService.ListOrganizations(ctx, req.PageSize, (req.PageID-1)*req.PageSize)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -111,6 +119,6 @@ func (server *Server) deleteOrganization(ctx *gin.Context) {
 }
 
 type listOrganizationsRequest struct {
-	PageID   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=10"`
+	PageID   int32 `form:"page_id" binding:"omitempty,min=1"`
+	PageSize int32 `form:"page_size" binding:"omitempty,min=5,max=10"`
 }

@@ -29,11 +29,12 @@ INSERT INTO messages (
     channel_id,
     sender_id,
     content,
+    content_type,
     message_type
 ) VALUES (
-    $1, $2, $3, $4, 'channel'
+    $1, $2, $3, $4, $5, 'channel'
 )
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
 `
 
 type CreateChannelMessageParams struct {
@@ -41,6 +42,7 @@ type CreateChannelMessageParams struct {
 	ChannelID   sql.NullInt64 `json:"channel_id"`
 	SenderID    int64         `json:"sender_id"`
 	Content     string        `json:"content"`
+	ContentType string        `json:"content_type"`
 }
 
 func (q *Queries) CreateChannelMessage(ctx context.Context, arg CreateChannelMessageParams) (Message, error) {
@@ -49,6 +51,7 @@ func (q *Queries) CreateChannelMessage(ctx context.Context, arg CreateChannelMes
 		arg.ChannelID,
 		arg.SenderID,
 		arg.Content,
+		arg.ContentType,
 	)
 	var i Message
 	err := row.Scan(
@@ -63,6 +66,7 @@ func (q *Queries) CreateChannelMessage(ctx context.Context, arg CreateChannelMes
 		&i.EditedAt,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.ContentType,
 	)
 	return i, err
 }
@@ -73,11 +77,12 @@ INSERT INTO messages (
     sender_id,
     receiver_id,
     content,
+    content_type,
     message_type
 ) VALUES (
-    $1, $2, $3, $4, 'direct'
+    $1, $2, $3, $4, $5, 'direct'
 )
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
 `
 
 type CreateDirectMessageParams struct {
@@ -85,6 +90,7 @@ type CreateDirectMessageParams struct {
 	SenderID    int64         `json:"sender_id"`
 	ReceiverID  sql.NullInt64 `json:"receiver_id"`
 	Content     string        `json:"content"`
+	ContentType string        `json:"content_type"`
 }
 
 func (q *Queries) CreateDirectMessage(ctx context.Context, arg CreateDirectMessageParams) (Message, error) {
@@ -93,6 +99,7 @@ func (q *Queries) CreateDirectMessage(ctx context.Context, arg CreateDirectMessa
 		arg.SenderID,
 		arg.ReceiverID,
 		arg.Content,
+		arg.ContentType,
 	)
 	var i Message
 	err := row.Scan(
@@ -107,13 +114,14 @@ func (q *Queries) CreateDirectMessage(ctx context.Context, arg CreateDirectMessa
 		&i.EditedAt,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.ContentType,
 	)
 	return i, err
 }
 
 const getChannelMessages = `-- name: GetChannelMessages :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -146,6 +154,7 @@ type GetChannelMessagesRow struct {
 	EditedAt        sql.NullTime  `json:"edited_at"`
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
+	ContentType     string        `json:"content_type"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -177,6 +186,7 @@ func (q *Queries) GetChannelMessages(ctx context.Context, arg GetChannelMessages
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ContentType,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
@@ -196,7 +206,7 @@ func (q *Queries) GetChannelMessages(ctx context.Context, arg GetChannelMessages
 
 const getDirectMessagesBetweenUsers = `-- name: GetDirectMessagesBetweenUsers :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -234,6 +244,7 @@ type GetDirectMessagesBetweenUsersRow struct {
 	EditedAt        sql.NullTime  `json:"edited_at"`
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
+	ContentType     string        `json:"content_type"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -266,6 +277,7 @@ func (q *Queries) GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDire
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ContentType,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
@@ -285,7 +297,7 @@ func (q *Queries) GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDire
 
 const getMessageByID = `-- name: GetMessageByID :one
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -306,6 +318,7 @@ type GetMessageByIDRow struct {
 	EditedAt        sql.NullTime  `json:"edited_at"`
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
+	ContentType     string        `json:"content_type"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -326,6 +339,7 @@ func (q *Queries) GetMessageByID(ctx context.Context, id int64) (GetMessageByIDR
 		&i.EditedAt,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.ContentType,
 		&i.SenderFirstName,
 		&i.SenderLastName,
 		&i.SenderEmail,
@@ -335,7 +349,7 @@ func (q *Queries) GetMessageByID(ctx context.Context, id int64) (GetMessageByIDR
 
 const getRecentWorkspaceMessages = `-- name: GetRecentWorkspaceMessages :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -366,6 +380,7 @@ type GetRecentWorkspaceMessagesRow struct {
 	EditedAt        sql.NullTime  `json:"edited_at"`
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
+	ContentType     string        `json:"content_type"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -392,6 +407,7 @@ func (q *Queries) GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentW
 			&i.EditedAt,
 			&i.DeletedAt,
 			&i.CreatedAt,
+			&i.ContentType,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
@@ -426,7 +442,7 @@ SET
     content = $2,
     edited_at = now()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
 `
 
 type UpdateMessageContentParams struct {
@@ -449,6 +465,7 @@ func (q *Queries) UpdateMessageContent(ctx context.Context, arg UpdateMessageCon
 		&i.EditedAt,
 		&i.DeletedAt,
 		&i.CreatedAt,
+		&i.ContentType,
 	)
 	return i, err
 }

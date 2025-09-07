@@ -13,12 +13,14 @@ import (
 // StatusService handles user status-related business logic
 type StatusService struct {
 	store db.Store
+	hub   WebSocketHub // Interface for WebSocket hub
 }
 
 // NewStatusService creates a new status service
-func NewStatusService(store db.Store) *StatusService {
+func NewStatusService(store db.Store, hub WebSocketHub) *StatusService {
 	return &StatusService{
 		store: store,
+		hub:   hub,
 	}
 }
 
@@ -31,9 +33,24 @@ func (s *StatusService) SetUserOnline(ctx context.Context, userID, workspaceID i
 		CustomStatus: sql.NullString{Valid: false},
 	}
 
-	_, err := s.store.UpsertUserStatus(ctx, arg)
+	userStatus, err := s.store.UpsertUserStatus(ctx, arg)
 	if err != nil {
 		return fmt.Errorf("failed to set user online: %w", err)
+	}
+
+	// Broadcast status change to WebSocket clients
+	if s.hub != nil {
+		statusResponse, err := s.toUserStatusResponse(ctx, userStatus)
+		if err == nil {
+			wsMessage := &WSMessage{
+				Type:        "status_changed",
+				Data:        statusResponse,
+				WorkspaceID: workspaceID,
+				UserID:      userID,
+				Timestamp:   time.Now(),
+			}
+			s.hub.BroadcastToWorkspace(workspaceID, wsMessage)
+		}
 	}
 
 	return nil
@@ -48,9 +65,24 @@ func (s *StatusService) SetUserOffline(ctx context.Context, userID, workspaceID 
 		CustomStatus: sql.NullString{Valid: false},
 	}
 
-	_, err := s.store.UpsertUserStatus(ctx, arg)
+	userStatus, err := s.store.UpsertUserStatus(ctx, arg)
 	if err != nil {
 		return fmt.Errorf("failed to set user offline: %w", err)
+	}
+
+	// Broadcast status change to WebSocket clients
+	if s.hub != nil {
+		statusResponse, err := s.toUserStatusResponse(ctx, userStatus)
+		if err == nil {
+			wsMessage := &WSMessage{
+				Type:        "status_changed",
+				Data:        statusResponse,
+				WorkspaceID: workspaceID,
+				UserID:      userID,
+				Timestamp:   time.Now(),
+			}
+			s.hub.BroadcastToWorkspace(workspaceID, wsMessage)
+		}
 	}
 
 	return nil
@@ -73,7 +105,24 @@ func (s *StatusService) SetUserStatus(ctx context.Context, userID, workspaceID i
 		return nil, fmt.Errorf("failed to set user status: %w", err)
 	}
 
-	return s.toUserStatusResponse(ctx, userStatus)
+	statusResponse, err := s.toUserStatusResponse(ctx, userStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	// Broadcast status change to WebSocket clients
+	if s.hub != nil {
+		wsMessage := &WSMessage{
+			Type:        "status_changed",
+			Data:        statusResponse,
+			WorkspaceID: workspaceID,
+			UserID:      userID,
+			Timestamp:   time.Now(),
+		}
+		s.hub.BroadcastToWorkspace(workspaceID, wsMessage)
+	}
+
+	return statusResponse, nil
 }
 
 // GetUserStatus retrieves a user's status

@@ -103,6 +103,14 @@ func (server *Server) listChannels(ctx *gin.Context) {
 		return
 	}
 
+	// Set default values if not provided
+	if req.PageID == 0 {
+		req.PageID = 1
+	}
+	if req.PageSize == 0 {
+		req.PageSize = 50
+	}
+
 	// Get current user from context
 	currentUser, exists := ctx.Get(currentUserKey)
 	if !exists {

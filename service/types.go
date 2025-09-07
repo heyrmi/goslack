@@ -88,8 +88,8 @@ type UpdateUserRoleRequest struct {
 
 // ListChannelsRequest represents the request to list channels
 type ListChannelsRequest struct {
-	PageID   int32 `form:"page_id" binding:"required,min=1"`
-	PageSize int32 `form:"page_size" binding:"required,min=5,max=50"`
+	PageID   int32 `form:"page_id" binding:"omitempty,min=1"`
+	PageSize int32 `form:"page_size" binding:"omitempty,min=5,max=50"`
 }
 
 // SendChannelMessageRequest represents the request to send a channel message
@@ -108,19 +108,39 @@ type EditMessageRequest struct {
 	Content string `json:"content" binding:"required,max=4000"`
 }
 
+// CreateChannelMessageRequest represents the request to create a channel message
+type CreateChannelMessageRequest struct {
+	WorkspaceID int64  `json:"workspace_id" binding:"required"`
+	ChannelID   int64  `json:"channel_id" binding:"required"`
+	Content     string `json:"content" binding:"max=4000"`
+	ContentType string `json:"content_type" binding:"required,oneof=text file image system"`
+	FileID      *int64 `json:"file_id,omitempty"`
+}
+
+// CreateDirectMessageRequest represents the request to create a direct message
+type CreateDirectMessageRequest struct {
+	WorkspaceID int64  `json:"workspace_id" binding:"required"`
+	ReceiverID  int64  `json:"receiver_id" binding:"required"`
+	Content     string `json:"content" binding:"max=4000"`
+	ContentType string `json:"content_type" binding:"required,oneof=text file image system"`
+	FileID      *int64 `json:"file_id,omitempty"`
+}
+
 // MessageResponse represents a message in API responses
 type MessageResponse struct {
-	ID          int64        `json:"id"`
-	WorkspaceID int64        `json:"workspace_id"`
-	ChannelID   *int64       `json:"channel_id,omitempty"`
-	SenderID    int64        `json:"sender_id"`
-	ReceiverID  *int64       `json:"receiver_id,omitempty"`
-	Content     string       `json:"content"`
-	MessageType string       `json:"message_type"`
-	ThreadID    *int64       `json:"thread_id,omitempty"`
-	Sender      UserResponse `json:"sender"`
-	EditedAt    *time.Time   `json:"edited_at,omitempty"`
-	CreatedAt   time.Time    `json:"created_at"`
+	ID          int64           `json:"id"`
+	WorkspaceID int64           `json:"workspace_id"`
+	ChannelID   *int64          `json:"channel_id,omitempty"`
+	SenderID    int64           `json:"sender_id"`
+	ReceiverID  *int64          `json:"receiver_id,omitempty"`
+	Content     string          `json:"content"`
+	ContentType string          `json:"content_type"` // "text", "file", "image", "system"
+	MessageType string          `json:"message_type"`
+	ThreadID    *int64          `json:"thread_id,omitempty"`
+	Sender      UserResponse    `json:"sender"`
+	Files       []*FileResponse `json:"files,omitempty"` // Attached files
+	EditedAt    *time.Time      `json:"edited_at,omitempty"`
+	CreatedAt   time.Time       `json:"created_at"`
 	// WebSocket metadata (for Phase 5)
 	EventType string `json:"event_type,omitempty"` // "message_sent", "message_edited", etc.
 }
@@ -145,8 +165,8 @@ type UserStatusResponse struct {
 
 // GetMessagesRequest represents the request to get messages with pagination
 type GetMessagesRequest struct {
-	Limit  int32 `form:"limit" binding:"required,min=1,max=100"`
-	Offset int32 `form:"offset" binding:"min=0"`
+	Limit  int32 `form:"limit" binding:"omitempty,min=1,max=100"`
+	Offset int32 `form:"offset" binding:"omitempty,min=0"`
 }
 
 // AddChannelMemberRequest represents the request to add a member to a channel
@@ -164,4 +184,21 @@ type ChannelMemberResponse struct {
 	Role      string       `json:"role"`
 	JoinedAt  time.Time    `json:"joined_at"`
 	User      UserResponse `json:"user"`
+}
+
+// WebSocketHub interface for WebSocket broadcasting
+type WebSocketHub interface {
+	BroadcastToWorkspace(workspaceID int64, message *WSMessage)
+	BroadcastToChannel(workspaceID, channelID int64, message *WSMessage)
+	BroadcastToUser(userID int64, message *WSMessage)
+}
+
+// WSMessage represents a WebSocket message
+type WSMessage struct {
+	Type        string      `json:"type"`
+	Data        interface{} `json:"data"`
+	WorkspaceID int64       `json:"workspace_id"`
+	ChannelID   *int64      `json:"channel_id,omitempty"`
+	UserID      int64       `json:"user_id"`
+	Timestamp   time.Time   `json:"timestamp"`
 }

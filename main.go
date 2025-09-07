@@ -40,7 +40,8 @@ func main() {
 
 // startBackgroundServices starts background services like inactivity monitoring
 func startBackgroundServices(store db.Store) {
-	statusService := service.NewStatusService(store)
+	// Background services don't need WebSocket broadcasting, so pass nil
+	statusService := service.NewStatusService(store, nil)
 
 	// Start inactivity monitor in background
 	go statusService.StartInactivityMonitor(context.Background())

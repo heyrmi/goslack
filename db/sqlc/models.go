@@ -27,6 +27,34 @@ type ChannelMember struct {
 	JoinedAt  time.Time `json:"joined_at"`
 }
 
+type File struct {
+	ID               int64          `json:"id"`
+	WorkspaceID      int64          `json:"workspace_id"`
+	UploaderID       int64          `json:"uploader_id"`
+	OriginalFilename string         `json:"original_filename"`
+	StoredFilename   string         `json:"stored_filename"`
+	FilePath         string         `json:"file_path"`
+	FileSize         int64          `json:"file_size"`
+	MimeType         string         `json:"mime_type"`
+	FileHash         string         `json:"file_hash"`
+	IsPublic         bool           `json:"is_public"`
+	UploadCompleted  bool           `json:"upload_completed"`
+	ThumbnailPath    sql.NullString `json:"thumbnail_path"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+}
+
+type FileShare struct {
+	ID               int64         `json:"id"`
+	FileID           int64         `json:"file_id"`
+	SharedBy         int64         `json:"shared_by"`
+	ChannelID        sql.NullInt64 `json:"channel_id"`
+	SharedWithUserID sql.NullInt64 `json:"shared_with_user_id"`
+	Permission       string        `json:"permission"`
+	ExpiresAt        sql.NullTime  `json:"expires_at"`
+	CreatedAt        time.Time     `json:"created_at"`
+}
+
 type Message struct {
 	ID          int64         `json:"id"`
 	WorkspaceID int64         `json:"workspace_id"`
@@ -39,6 +67,14 @@ type Message struct {
 	EditedAt    sql.NullTime  `json:"edited_at"`
 	DeletedAt   sql.NullTime  `json:"deleted_at"`
 	CreatedAt   time.Time     `json:"created_at"`
+	ContentType string        `json:"content_type"`
+}
+
+type MessageFile struct {
+	ID        int64     `json:"id"`
+	MessageID int64     `json:"message_id"`
+	FileID    int64     `json:"file_id"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Organization struct {
