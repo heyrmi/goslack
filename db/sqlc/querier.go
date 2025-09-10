@@ -6,15 +6,19 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
 type Querier interface {
+	AcceptWorkspaceInvitation(ctx context.Context, arg AcceptWorkspaceInvitationParams) (WorkspaceInvitation, error)
 	AddChannelMember(ctx context.Context, arg AddChannelMemberParams) (ChannelMember, error)
+	AddUserToWorkspace(ctx context.Context, arg AddUserToWorkspaceParams) (User, error)
 	CheckChannelMembership(ctx context.Context, arg CheckChannelMembershipParams) (string, error)
 	// Check if user has access to file through direct ownership, channel membership, or direct share
 	CheckFileAccess(ctx context.Context, arg CheckFileAccessParams) (bool, error)
 	CheckMessageAuthor(ctx context.Context, id int64) (int64, error)
+	CheckUserInWorkspace(ctx context.Context, arg CheckUserInWorkspaceParams) (bool, error)
 	CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error)
 	CleanupIncompleteUploads(ctx context.Context) error
 	CreateChannel(ctx context.Context, arg CreateChannelParams) (Channel, error)
@@ -26,12 +30,16 @@ type Querier interface {
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams) (Workspace, error)
+	CreateWorkspaceInvitation(ctx context.Context, arg CreateWorkspaceInvitationParams) (WorkspaceInvitation, error)
+	DeclineWorkspaceInvitation(ctx context.Context, invitationCode string) (WorkspaceInvitation, error)
 	DeleteChannel(ctx context.Context, id int64) error
 	DeleteFile(ctx context.Context, arg DeleteFileParams) error
 	DeleteMessageFile(ctx context.Context, arg DeleteMessageFileParams) error
 	DeleteOrganization(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteWorkspace(ctx context.Context, id int64) error
+	DeleteWorkspaceInvitation(ctx context.Context, id int64) error
+	ExpireWorkspaceInvitation(ctx context.Context, id int64) error
 	GetChannel(ctx context.Context, id int64) (Channel, error)
 	GetChannelByID(ctx context.Context, id int64) (Channel, error)
 	GetChannelMembers(ctx context.Context, arg GetChannelMembersParams) ([]GetChannelMembersRow, error)
@@ -49,6 +57,7 @@ type Querier interface {
 	GetMessageFiles(ctx context.Context, messageID int64) ([]GetMessageFilesRow, error)
 	GetOnlineUsersInWorkspace(ctx context.Context, workspaceID int64) ([]GetOnlineUsersInWorkspaceRow, error)
 	GetOrganization(ctx context.Context, id int64) (Organization, error)
+	GetPendingInvitationsForUser(ctx context.Context, inviteeEmail string) ([]GetPendingInvitationsForUserRow, error)
 	GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentWorkspaceMessagesParams) ([]GetRecentWorkspaceMessagesRow, error)
 	GetUser(ctx context.Context, id int64) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
@@ -57,6 +66,9 @@ type Querier interface {
 	GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspaceParams) ([]User, error)
 	GetWorkspace(ctx context.Context, id int64) (Workspace, error)
 	GetWorkspaceByID(ctx context.Context, id int64) (Workspace, error)
+	GetWorkspaceInvitation(ctx context.Context, id int64) (WorkspaceInvitation, error)
+	GetWorkspaceInvitationByCode(ctx context.Context, invitationCode string) (WorkspaceInvitation, error)
+	GetWorkspaceMemberCount(ctx context.Context, workspaceID sql.NullInt64) (int64, error)
 	GetWorkspaceUserStatuses(ctx context.Context, arg GetWorkspaceUserStatusesParams) ([]GetWorkspaceUserStatusesRow, error)
 	GetWorkspaceWithUserCount(ctx context.Context, id int64) (GetWorkspaceWithUserCountRow, error)
 	IsChannelMember(ctx context.Context, arg IsChannelMemberParams) (bool, error)
@@ -66,8 +78,11 @@ type Querier interface {
 	ListUserFiles(ctx context.Context, arg ListUserFilesParams) ([]ListUserFilesRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListWorkspaceFiles(ctx context.Context, arg ListWorkspaceFilesParams) ([]ListWorkspaceFilesRow, error)
+	ListWorkspaceInvitations(ctx context.Context, arg ListWorkspaceInvitationsParams) ([]WorkspaceInvitation, error)
+	ListWorkspaceMembers(ctx context.Context, arg ListWorkspaceMembersParams) ([]ListWorkspaceMembersRow, error)
 	ListWorkspacesByOrganization(ctx context.Context, arg ListWorkspacesByOrganizationParams) ([]Workspace, error)
 	RemoveChannelMember(ctx context.Context, arg RemoveChannelMemberParams) error
+	RemoveUserFromWorkspace(ctx context.Context, arg RemoveUserFromWorkspaceParams) (User, error)
 	SetUsersOfflineAfterInactivity(ctx context.Context, lastActivityAt time.Time) error
 	SoftDeleteMessage(ctx context.Context, id int64) error
 	UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error)
@@ -81,6 +96,7 @@ type Querier interface {
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error)
 	UpdateUserWorkspace(ctx context.Context, arg UpdateUserWorkspaceParams) (User, error)
 	UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams) (Workspace, error)
+	UpdateWorkspaceMemberRole(ctx context.Context, arg UpdateWorkspaceMemberRoleParams) (User, error)
 	UpsertUserStatus(ctx context.Context, arg UpsertUserStatusParams) (UserStatus, error)
 }
 

@@ -43,6 +43,7 @@ func (s *MessageService) SendChannelMessage(ctx context.Context, workspaceID, ch
 		ChannelID:   sql.NullInt64{Int64: channelID, Valid: true},
 		SenderID:    senderID,
 		Content:     content,
+		ContentType: "text", // Default to text content type
 	}
 
 	message, err := s.store.CreateChannelMessage(ctx, arg)
@@ -96,6 +97,7 @@ func (s *MessageService) SendDirectMessage(ctx context.Context, workspaceID, sen
 		SenderID:    senderID,
 		ReceiverID:  sql.NullInt64{Int64: receiverID, Valid: true},
 		Content:     content,
+		ContentType: "text", // Default to text content type
 	}
 
 	message, err := s.store.CreateDirectMessage(ctx, arg)

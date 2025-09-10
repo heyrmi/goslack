@@ -16,18 +16,19 @@ import (
 
 // Server serves HTTP requests for our GoSlack service.
 type Server struct {
-	config              util.Config
-	store               db.Store
-	tokenMaker          token.Maker
-	router              *gin.Engine
-	userService         *service.UserService
-	organizationService *service.OrganizationService
-	workspaceService    *service.WorkspaceService
-	channelService      *service.ChannelService
-	messageService      *service.MessageService
-	statusService       *service.StatusService
-	fileService         *service.FileService
-	hub                 *Hub // WebSocket hub
+	config                     util.Config
+	store                      db.Store
+	tokenMaker                 token.Maker
+	router                     *gin.Engine
+	userService                *service.UserService
+	organizationService        *service.OrganizationService
+	workspaceService           *service.WorkspaceService
+	workspaceInvitationService *service.WorkspaceInvitationService
+	channelService             *service.ChannelService
+	messageService             *service.MessageService
+	statusService              *service.StatusService
+	fileService                *service.FileService
+	hub                        *Hub // WebSocket hub
 }
 
 // NewServer creates a new HTTP server and set up routing.
@@ -43,23 +44,25 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	userService := service.NewUserService(store, tokenMaker, config)
 	organizationService := service.NewOrganizationService(store)
 	workspaceService := service.NewWorkspaceService(store, userService)
+	workspaceInvitationService := service.NewWorkspaceInvitationService(store)
 	channelService := service.NewChannelService(store, userService, workspaceService)
 	messageService := service.NewMessageService(store, userService, hub) // Pass hub to message service
 	statusService := service.NewStatusService(store, hub)                // Pass hub to status service
 	fileService := service.NewFileService(store, config)                 // Add file service
 
 	server := &Server{
-		config:              config,
-		store:               store,
-		tokenMaker:          tokenMaker,
-		userService:         userService,
-		organizationService: organizationService,
-		workspaceService:    workspaceService,
-		channelService:      channelService,
-		messageService:      messageService,
-		statusService:       statusService,
-		fileService:         fileService,
-		hub:                 hub,
+		config:                     config,
+		store:                      store,
+		tokenMaker:                 tokenMaker,
+		userService:                userService,
+		organizationService:        organizationService,
+		workspaceService:           workspaceService,
+		workspaceInvitationService: workspaceInvitationService,
+		channelService:             channelService,
+		messageService:             messageService,
+		statusService:              statusService,
+		fileService:                fileService,
+		hub:                        hub,
 	}
 
 	server.setupRouter()
@@ -116,6 +119,18 @@ func (server *Server) setupRouter() {
 	// Workspace admin routes (require admin of the workspace)
 	authWithUserRoutes.PUT("/workspaces/:id", requireWorkspaceAdmin(server.userService), server.updateWorkspace)
 	authWithUserRoutes.DELETE("/workspaces/:id", requireWorkspaceAdmin(server.userService), server.deleteWorkspace)
+
+	// Workspace invitation routes (require workspace admin)
+	authWithUserRoutes.POST("/workspaces/:id/invitations", requireWorkspaceAdmin(server.userService), server.inviteUserToWorkspace)
+	authWithUserRoutes.GET("/workspaces/:id/invitations", requireWorkspaceAdmin(server.userService), server.listWorkspaceInvitations)
+
+	// Join workspace route (any authenticated user)
+	authWithUserRoutes.POST("/workspaces/join", server.joinWorkspace)
+
+	// Workspace member management routes
+	authWithUserRoutes.GET("/workspaces/:id/members", requireWorkspaceMember(server.userService), server.listWorkspaceMembers)
+	authWithUserRoutes.DELETE("/workspaces/:id/members/:user_id", requireWorkspaceAdmin(server.userService), server.removeUserFromWorkspace)
+	authWithUserRoutes.PUT("/workspaces/:id/members/:user_id/role", requireWorkspaceAdmin(server.userService), server.updateWorkspaceMemberRole)
 
 	// Workspace member routes (require membership of the workspace)
 	authWithUserRoutes.POST("/workspaces/:id/channels", requireWorkspaceMember(server.userService), server.createChannel)

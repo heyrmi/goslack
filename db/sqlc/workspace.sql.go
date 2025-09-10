@@ -7,8 +7,63 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
+
+const addUserToWorkspace = `-- name: AddUserToWorkspace :one
+UPDATE users
+SET 
+    workspace_id = $2,
+    role = $3
+WHERE users.id = $1 AND users.organization_id = (
+    SELECT workspaces.organization_id FROM workspaces WHERE workspaces.id = $2
+)
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+`
+
+type AddUserToWorkspaceParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Role        string        `json:"role"`
+}
+
+func (q *Queries) AddUserToWorkspace(ctx context.Context, arg AddUserToWorkspaceParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, addUserToWorkspace, arg.ID, arg.WorkspaceID, arg.Role)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.HashedPassword,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
+	)
+	return i, err
+}
+
+const checkUserInWorkspace = `-- name: CheckUserInWorkspace :one
+SELECT EXISTS(
+    SELECT 1 FROM users 
+    WHERE users.id = $1 AND users.workspace_id = $2
+) as is_member
+`
+
+type CheckUserInWorkspaceParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+}
+
+func (q *Queries) CheckUserInWorkspace(ctx context.Context, arg CheckUserInWorkspaceParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkUserInWorkspace, arg.ID, arg.WorkspaceID)
+	var is_member bool
+	err := row.Scan(&is_member)
+	return is_member, err
+}
 
 const createWorkspace = `-- name: CreateWorkspace :one
 INSERT INTO workspaces (
@@ -81,6 +136,19 @@ func (q *Queries) GetWorkspaceByID(ctx context.Context, id int64) (Workspace, er
 	return i, err
 }
 
+const getWorkspaceMemberCount = `-- name: GetWorkspaceMemberCount :one
+SELECT COUNT(*) as member_count
+FROM users
+WHERE workspace_id = $1
+`
+
+func (q *Queries) GetWorkspaceMemberCount(ctx context.Context, workspaceID sql.NullInt64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getWorkspaceMemberCount, workspaceID)
+	var member_count int64
+	err := row.Scan(&member_count)
+	return member_count, err
+}
+
 const getWorkspaceWithUserCount = `-- name: GetWorkspaceWithUserCount :one
 SELECT 
     w.id, w.organization_id, w.name, w.created_at,
@@ -111,6 +179,64 @@ func (q *Queries) GetWorkspaceWithUserCount(ctx context.Context, id int64) (GetW
 		&i.UserCount,
 	)
 	return i, err
+}
+
+const listWorkspaceMembers = `-- name: ListWorkspaceMembers :many
+SELECT u.id, u.organization_id, u.email, u.first_name, u.last_name, u.role, u.created_at, u.workspace_id
+FROM users u
+WHERE u.workspace_id = $1
+ORDER BY u.role DESC, u.created_at ASC
+LIMIT $2
+OFFSET $3
+`
+
+type ListWorkspaceMembersParams struct {
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Limit       int32         `json:"limit"`
+	Offset      int32         `json:"offset"`
+}
+
+type ListWorkspaceMembersRow struct {
+	ID             int64         `json:"id"`
+	OrganizationID int64         `json:"organization_id"`
+	Email          string        `json:"email"`
+	FirstName      string        `json:"first_name"`
+	LastName       string        `json:"last_name"`
+	Role           string        `json:"role"`
+	CreatedAt      time.Time     `json:"created_at"`
+	WorkspaceID    sql.NullInt64 `json:"workspace_id"`
+}
+
+func (q *Queries) ListWorkspaceMembers(ctx context.Context, arg ListWorkspaceMembersParams) ([]ListWorkspaceMembersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listWorkspaceMembers, arg.WorkspaceID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListWorkspaceMembersRow{}
+	for rows.Next() {
+		var i ListWorkspaceMembersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.Email,
+			&i.FirstName,
+			&i.LastName,
+			&i.Role,
+			&i.CreatedAt,
+			&i.WorkspaceID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listWorkspacesByOrganization = `-- name: ListWorkspacesByOrganization :many
@@ -155,6 +281,38 @@ func (q *Queries) ListWorkspacesByOrganization(ctx context.Context, arg ListWork
 	return items, nil
 }
 
+const removeUserFromWorkspace = `-- name: RemoveUserFromWorkspace :one
+UPDATE users
+SET 
+    workspace_id = NULL,
+    role = 'member'
+WHERE users.id = $1 AND users.workspace_id = $2
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+`
+
+type RemoveUserFromWorkspaceParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+}
+
+func (q *Queries) RemoveUserFromWorkspace(ctx context.Context, arg RemoveUserFromWorkspaceParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, removeUserFromWorkspace, arg.ID, arg.WorkspaceID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.HashedPassword,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
+	)
+	return i, err
+}
+
 const updateWorkspace = `-- name: UpdateWorkspace :one
 UPDATE workspaces
 SET name = $2
@@ -175,6 +333,37 @@ func (q *Queries) UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams
 		&i.OrganizationID,
 		&i.Name,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateWorkspaceMemberRole = `-- name: UpdateWorkspaceMemberRole :one
+UPDATE users
+SET role = $3
+WHERE users.id = $1 AND users.workspace_id = $2
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+`
+
+type UpdateWorkspaceMemberRoleParams struct {
+	ID          int64         `json:"id"`
+	WorkspaceID sql.NullInt64 `json:"workspace_id"`
+	Role        string        `json:"role"`
+}
+
+func (q *Queries) UpdateWorkspaceMemberRole(ctx context.Context, arg UpdateWorkspaceMemberRoleParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateWorkspaceMemberRole, arg.ID, arg.WorkspaceID, arg.Role)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Email,
+		&i.FirstName,
+		&i.LastName,
+		&i.HashedPassword,
+		&i.PasswordChangedAt,
+		&i.CreatedAt,
+		&i.WorkspaceID,
+		&i.Role,
 	)
 	return i, err
 }
