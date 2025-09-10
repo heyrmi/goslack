@@ -112,3 +112,17 @@ type Workspace struct {
 	Name           string    `json:"name"`
 	CreatedAt      time.Time `json:"created_at"`
 }
+
+type WorkspaceInvitation struct {
+	ID             int64         `json:"id"`
+	WorkspaceID    int64         `json:"workspace_id"`
+	InviterID      int64         `json:"inviter_id"`
+	InviteeEmail   string        `json:"invitee_email"`
+	InviteeID      sql.NullInt64 `json:"invitee_id"`
+	InvitationCode string        `json:"invitation_code"`
+	Role           string        `json:"role"`
+	Status         string        `json:"status"`
+	ExpiresAt      time.Time     `json:"expires_at"`
+	AcceptedAt     sql.NullTime  `json:"accepted_at"`
+	CreatedAt      time.Time     `json:"created_at"`
+}

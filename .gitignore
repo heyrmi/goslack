@@ -40,3 +40,9 @@ Thumbs.db
 
 # Exlude the TODO.md file for local development and tracking
 *.md
+
+package-lock.json
+package.json
+node_modules
+*.js
+*.txt
