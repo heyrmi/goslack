@@ -64,6 +64,7 @@ func TestSendChannelMessageAPI(t *testing.T) {
 					ChannelID:   sql.NullInt64{Int64: channel.ID, Valid: true},
 					SenderID:    user.ID,
 					Content:     "Hello, world!",
+					ContentType: "text",
 				}
 
 				message := db.Message{
@@ -223,6 +224,7 @@ func TestSendDirectMessageAPI(t *testing.T) {
 					SenderID:    user.ID,
 					ReceiverID:  sql.NullInt64{Int64: receiver.ID, Valid: true},
 					Content:     "Hello there!",
+					ContentType: "text",
 				}
 
 				message := db.Message{
