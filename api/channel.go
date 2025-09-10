@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/service"
 	"github.com/lib/pq"
 )
@@ -47,7 +48,7 @@ func (server *Server) createChannel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	channel, err := server.channelService.CreateChannel(ctx, user.ID, workspaceID, req)
 	if err != nil {
@@ -95,7 +96,7 @@ func (server *Server) getChannel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Check if user has access to this channel
 	err := server.channelService.CheckChannelAccess(ctx, user.ID, req.ID)
@@ -157,7 +158,7 @@ func (server *Server) listChannels(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	channels, err := server.channelService.ListChannelsByWorkspace(
 		ctx,
@@ -209,7 +210,7 @@ func (server *Server) updateChannel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	channel, err := server.channelService.UpdateChannel(ctx, user.ID, uriReq.ID, req.Name, req.IsPrivate)
 	if err != nil {
@@ -253,7 +254,7 @@ func (server *Server) deleteChannel(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	err := server.channelService.DeleteChannel(ctx, user.ID, req.ID)
 	if err != nil {

@@ -26,9 +26,16 @@ type Server struct {
 	workspaceInvitationService *service.WorkspaceInvitationService
 	channelService             *service.ChannelService
 	messageService             *service.MessageService
+	messageEnhancedService     *service.MessageEnhancedService
 	statusService              *service.StatusService
 	fileService                *service.FileService
 	hub                        *Hub // WebSocket hub
+
+	// New security services
+	emailService     *service.EmailService
+	authService      *service.AuthService
+	twoFactorService *service.TwoFactorService
+	rateLimiter      *RateLimiter
 }
 
 // NewServer creates a new HTTP server and set up routing.
@@ -41,14 +48,68 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 	// Create WebSocket hub
 	hub := NewHub(config)
 
+	// Create email service
+	emailConfig := service.EmailConfig{
+		SMTPHost:     config.SMTPHost,
+		SMTPPort:     config.SMTPPort,
+		SMTPUsername: config.SMTPUsername,
+		SMTPPassword: config.SMTPPassword,
+		FromEmail:    config.FromEmail,
+		FromName:     config.FromName,
+		BaseURL:      config.BaseURL,
+	}
+	emailService := service.NewEmailService(emailConfig)
+
+	// Create rate limiter
+	var rateLimitConfig RateLimitConfig
+	switch config.RateLimitMode {
+	case "strict":
+		rateLimitConfig = StrictRateLimitConfig()
+	case "permissive":
+		rateLimitConfig = PermissiveRateLimitConfig()
+	default:
+		rateLimitConfig = DefaultRateLimitConfig()
+	}
+
+	// Override with custom values if provided
+	if config.AuthRequestsPerMinute > 0 {
+		rateLimitConfig.AuthRequestsPerMinute = config.AuthRequestsPerMinute
+	}
+	if config.APIRequestsPerMinute > 0 {
+		rateLimitConfig.APIRequestsPerMinute = config.APIRequestsPerMinute
+	}
+	if config.UploadRequestsPerMinute > 0 {
+		rateLimitConfig.UploadRequestsPerMinute = config.UploadRequestsPerMinute
+	}
+	if config.MessageRequestsPerMinute > 0 {
+		rateLimitConfig.MessageRequestsPerMinute = config.MessageRequestsPerMinute
+	}
+
+	var rateLimiter *RateLimiter
+	if config.EnableRateLimit {
+		rateLimiter = NewRateLimiter(rateLimitConfig)
+	}
+
 	userService := service.NewUserService(store, tokenMaker, config)
 	organizationService := service.NewOrganizationService(store)
 	workspaceService := service.NewWorkspaceService(store, userService)
 	workspaceInvitationService := service.NewWorkspaceInvitationService(store)
 	channelService := service.NewChannelService(store, userService, workspaceService)
 	messageService := service.NewMessageService(store, userService, hub) // Pass hub to message service
-	statusService := service.NewStatusService(store, hub)                // Pass hub to status service
-	fileService := service.NewFileService(store, config)                 // Add file service
+
+	// Create hub adapter for enhanced message service
+	hubAdapter := NewHubAdapter(hub)
+	messageEnhancedService := service.NewMessageEnhancedService(store, hubAdapter) // Enhanced message features
+
+	statusService := service.NewStatusService(store, hub) // Pass hub to status service
+	fileService := service.NewFileService(store, config)  // Add file service
+
+	// Create security services
+	authService := service.NewAuthService(store, tokenMaker, emailService, config)
+	twoFactorService := service.NewTwoFactorService(store)
+
+	// Set up circular dependency (user service needs auth service for lockout checks)
+	userService.SetAuthService(authService)
 
 	server := &Server{
 		config:                     config,
@@ -60,9 +121,14 @@ func NewServer(config util.Config, store db.Store) (*Server, error) {
 		workspaceInvitationService: workspaceInvitationService,
 		channelService:             channelService,
 		messageService:             messageService,
+		messageEnhancedService:     messageEnhancedService,
 		statusService:              statusService,
 		fileService:                fileService,
 		hub:                        hub,
+		emailService:               emailService,
+		authService:                authService,
+		twoFactorService:           twoFactorService,
+		rateLimiter:                rateLimiter,
 	}
 
 	server.setupRouter()
@@ -89,24 +155,58 @@ func (server *Server) setupRouter() {
 	// API info endpoint
 	router.GET("/api/info", server.getAPIInfo)
 
-	// Public routes (no authentication required)
-	router.POST("/organizations", server.createOrganization)
-	router.GET("/organizations/:id", server.getOrganization)
-	router.GET("/organizations", server.listOrganizations)
-	router.POST("/users", server.createUser)
-	router.POST("/users/login", server.loginUser)
+	// Apply rate limiting if enabled
+	var authRateLimit, apiRateLimit, uploadRateLimit, messageRateLimit gin.HandlerFunc
+	if server.rateLimiter != nil {
+		authRateLimit = server.rateLimiter.RateLimitMiddleware("auth")
+		apiRateLimit = server.rateLimiter.RateLimitMiddleware("api")
+		uploadRateLimit = server.rateLimiter.RateLimitMiddleware("upload")
+		messageRateLimit = server.rateLimiter.RateLimitMiddleware("message")
+	} else {
+		// No-op middleware if rate limiting is disabled
+		noOp := func(ctx *gin.Context) { ctx.Next() }
+		authRateLimit = noOp
+		apiRateLimit = noOp
+		uploadRateLimit = noOp
+		messageRateLimit = noOp
+	}
 
-	// Protected routes (authentication required)
-	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
-	authRoutes.GET("/users/:id", server.getUser)
-	authRoutes.PUT("/users/:id/profile", server.updateUserProfile)
-	authRoutes.PUT("/users/:id/password", server.changePassword)
-	authRoutes.GET("/users", server.listUsers)
-	authRoutes.PUT("/organizations/:id", server.updateOrganization)
-	authRoutes.DELETE("/organizations/:id", server.deleteOrganization)
+	// Public routes (no authentication required, with auth rate limiting)
+	publicAuthRoutes := router.Group("/").Use(authRateLimit)
+	publicAuthRoutes.POST("/organizations", server.createOrganization)
+	publicAuthRoutes.POST("/users", server.createUser)
+	publicAuthRoutes.POST("/users/login", server.loginUser)
 
-	// Protected routes with user context
-	authWithUserRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService))
+	// Authentication endpoints (public, with auth rate limiting)
+	publicAuthRoutes.POST("/auth/send-verification", server.sendEmailVerification)
+	publicAuthRoutes.POST("/auth/verify-email", server.verifyEmail)
+	publicAuthRoutes.POST("/auth/forgot-password", server.requestPasswordReset)
+	publicAuthRoutes.POST("/auth/reset-password", server.resetPassword)
+
+	// Public API routes (with general API rate limiting)
+	publicAPIRoutes := router.Group("/").Use(apiRateLimit)
+	publicAPIRoutes.GET("/organizations/:id", server.getOrganization)
+	publicAPIRoutes.GET("/organizations", server.listOrganizations)
+
+	// Protected routes (authentication required, with API rate limiting)
+	protectedRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker), apiRateLimit)
+	protectedRoutes.GET("/users/:id", server.getUser)
+	protectedRoutes.PUT("/users/:id/profile", server.updateUserProfile)
+	protectedRoutes.PUT("/users/:id/password", server.changePassword)
+	protectedRoutes.GET("/users", server.listUsers)
+	protectedRoutes.PUT("/organizations/:id", server.updateOrganization)
+	protectedRoutes.DELETE("/organizations/:id", server.deleteOrganization)
+
+	// Protected routes with user context (with API rate limiting)
+	authWithUserRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService), apiRateLimit)
+
+	// 2FA and security endpoints (protected)
+	authWithUserRoutes.POST("/auth/2fa/setup", server.setup2FA)
+	authWithUserRoutes.POST("/auth/2fa/verify", server.verify2FA)
+	authWithUserRoutes.POST("/auth/2fa/disable", server.disable2FA)
+	authWithUserRoutes.POST("/auth/2fa/backup-codes", server.regenerateBackupCodes)
+	authWithUserRoutes.GET("/auth/2fa/status", server.get2FAStatus)
+	authWithUserRoutes.GET("/auth/security-events", server.getSecurityEvents)
 
 	// WebSocket endpoint
 	authWithUserRoutes.GET("/ws", server.handleWebSocket)
@@ -144,14 +244,15 @@ func (server *Server) setupRouter() {
 	// User role management (admin only, same workspace)
 	authWithUserRoutes.PATCH("/users/:user_id/role", requireSameWorkspaceForUserRole(server.userService), server.updateUserRole)
 
-	// Message routes
-	authWithUserRoutes.POST("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.sendChannelMessage)
-	authWithUserRoutes.POST("/workspace/:id/messages/direct", requireWorkspaceMember(server.userService), server.sendDirectMessage)
-	authWithUserRoutes.GET("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.getChannelMessages)
-	authWithUserRoutes.GET("/workspace/:id/messages/direct/:user_id", requireWorkspaceMember(server.userService), server.getDirectMessages)
-	authWithUserRoutes.PUT("/messages/:message_id", server.editMessage)
-	authWithUserRoutes.DELETE("/messages/:message_id", server.deleteMessage)
-	authWithUserRoutes.GET("/messages/:message_id", server.getMessage)
+	// Message routes (with message rate limiting)
+	messageRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService), messageRateLimit)
+	messageRoutes.POST("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.sendChannelMessage)
+	messageRoutes.POST("/workspace/:id/messages/direct", requireWorkspaceMember(server.userService), server.sendDirectMessage)
+	messageRoutes.GET("/workspace/:id/channels/:channel_id/messages", requireWorkspaceMember(server.userService), server.getChannelMessages)
+	messageRoutes.GET("/workspace/:id/messages/direct/:user_id", requireWorkspaceMember(server.userService), server.getDirectMessages)
+	messageRoutes.PUT("/messages/:message_id", server.editMessage)
+	messageRoutes.DELETE("/messages/:message_id", server.deleteMessage)
+	messageRoutes.GET("/messages/:message_id", server.getMessage)
 
 	// Status routes
 	authWithUserRoutes.PUT("/workspace/:id/status", requireWorkspaceMember(server.userService), server.updateUserStatus)
@@ -162,14 +263,45 @@ func (server *Server) setupRouter() {
 	// Typing indicator endpoint
 	authWithUserRoutes.POST("/workspaces/:id/channels/:channel_id/typing", requireWorkspaceMember(server.userService), server.handleTyping)
 
-	// File routes
-	authWithUserRoutes.POST("/files/upload", server.uploadFile)
-	authWithUserRoutes.GET("/files/:id", server.getFile)
-	authWithUserRoutes.GET("/files/:id/download", server.downloadFile)
-	authWithUserRoutes.DELETE("/files/:id", server.deleteFile)
-	authWithUserRoutes.GET("/workspaces/:id/files", requireWorkspaceMember(server.userService), server.listWorkspaceFiles)
-	authWithUserRoutes.GET("/workspaces/:id/files/stats", requireWorkspaceMember(server.userService), server.getFileStats)
-	authWithUserRoutes.POST("/files/message", server.sendFileMessage)
+	// File routes (with upload rate limiting)
+	fileRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService), uploadRateLimit)
+	fileRoutes.POST("/files/upload", server.uploadFile)
+	fileRoutes.GET("/files/:id", server.getFile)
+	fileRoutes.GET("/files/:id/download", server.downloadFile)
+	fileRoutes.DELETE("/files/:id", server.deleteFile)
+	fileRoutes.GET("/workspaces/:id/files", requireWorkspaceMember(server.userService), server.listWorkspaceFiles)
+	fileRoutes.GET("/workspaces/:id/files/stats", requireWorkspaceMember(server.userService), server.getFileStats)
+	fileRoutes.POST("/files/message", server.sendFileMessage)
+
+	// Enhanced message routes (threading, reactions, mentions, search, etc.)
+	enhancedMessageRoutes := router.Group("/").Use(authWithUserMiddleware(server.tokenMaker, server.userService), messageRateLimit)
+
+	// Threading
+	enhancedMessageRoutes.POST("/messages/thread/reply", server.createThreadReply)
+	enhancedMessageRoutes.GET("/messages/thread/:thread_id", server.getThreadMessages)
+	enhancedMessageRoutes.GET("/messages/thread/:thread_id/info", server.getThreadInfo)
+
+	// Reactions
+	enhancedMessageRoutes.POST("/messages/reactions/add", server.addMessageReaction)
+	enhancedMessageRoutes.POST("/messages/reactions/remove", server.removeMessageReaction)
+	enhancedMessageRoutes.GET("/messages/:message_id/reactions", server.getMessageReactions)
+
+	// Search
+	enhancedMessageRoutes.POST("/messages/search", server.searchMessages)
+
+	// Pinning
+	enhancedMessageRoutes.POST("/messages/pin", server.pinMessage)
+	enhancedMessageRoutes.POST("/messages/:message_id/unpin", server.unpinMessage)
+	enhancedMessageRoutes.GET("/channels/:id/pinned", server.getPinnedMessages)
+
+	// Drafts
+	enhancedMessageRoutes.POST("/messages/drafts", server.saveDraft)
+	enhancedMessageRoutes.GET("/workspaces/:id/drafts", server.getUserDrafts)
+
+	// Mentions and unread
+	enhancedMessageRoutes.GET("/workspaces/:id/mentions", server.getUserMentions)
+	enhancedMessageRoutes.GET("/workspaces/:id/unread", server.getUnreadMessages)
+	enhancedMessageRoutes.POST("/messages/mark-read", server.markAsRead)
 
 	server.router = router
 }

@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AcceptWorkspaceInvitation(ctx context.Context, arg AcceptWorkspaceInvitationParams) (WorkspaceInvitation, error)
 	AddChannelMember(ctx context.Context, arg AddChannelMemberParams) (ChannelMember, error)
+	AddMessageReaction(ctx context.Context, arg AddMessageReactionParams) (MessageReaction, error)
 	AddUserToWorkspace(ctx context.Context, arg AddUserToWorkspaceParams) (User, error)
 	CheckChannelMembership(ctx context.Context, arg CheckChannelMembershipParams) (string, error)
 	// Check if user has access to file through direct ownership, channel membership, or direct share
@@ -21,32 +22,57 @@ type Querier interface {
 	CheckUserInWorkspace(ctx context.Context, arg CheckUserInWorkspaceParams) (bool, error)
 	CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error)
 	CleanupIncompleteUploads(ctx context.Context) error
+	CleanupOldDrafts(ctx context.Context, updatedAt time.Time) error
+	CleanupOldSecurityEvents(ctx context.Context, createdAt time.Time) error
+	CleanupOldSessions(ctx context.Context, lastUsedAt time.Time) error
+	CreateAccountLockout(ctx context.Context, userID int64) (AccountLockout, error)
 	CreateChannel(ctx context.Context, arg CreateChannelParams) (Channel, error)
 	CreateChannelMessage(ctx context.Context, arg CreateChannelMessageParams) (Message, error)
 	CreateDirectMessage(ctx context.Context, arg CreateDirectMessageParams) (Message, error)
+	CreateEmailVerificationToken(ctx context.Context, arg CreateEmailVerificationTokenParams) (EmailVerificationToken, error)
 	CreateFile(ctx context.Context, arg CreateFileParams) (File, error)
 	CreateFileShare(ctx context.Context, arg CreateFileShareParams) (FileShare, error)
 	CreateMessageFile(ctx context.Context, arg CreateMessageFileParams) (MessageFile, error)
+	CreateMessageMention(ctx context.Context, arg CreateMessageMentionParams) (MessageMention, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
+	CreatePasswordResetToken(ctx context.Context, arg CreatePasswordResetTokenParams) (PasswordResetToken, error)
+	CreateSecurityEvent(ctx context.Context, arg CreateSecurityEventParams) (SecurityEvent, error)
+	CreateThreadReply(ctx context.Context, arg CreateThreadReplyParams) (Message, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	CreateUser2FA(ctx context.Context, arg CreateUser2FAParams) (User2fa, error)
+	CreateUserSession(ctx context.Context, arg CreateUserSessionParams) (UserSession, error)
 	CreateWorkspace(ctx context.Context, arg CreateWorkspaceParams) (Workspace, error)
 	CreateWorkspaceInvitation(ctx context.Context, arg CreateWorkspaceInvitationParams) (WorkspaceInvitation, error)
+	DeactivateExpiredSessions(ctx context.Context) error
+	DeactivateSession(ctx context.Context, sessionToken string) error
+	DeactivateUserSessions(ctx context.Context, userID int64) error
 	DeclineWorkspaceInvitation(ctx context.Context, invitationCode string) (WorkspaceInvitation, error)
 	DeleteChannel(ctx context.Context, id int64) error
+	DeleteExpiredEmailVerificationTokens(ctx context.Context) error
+	DeleteExpiredPasswordResetTokens(ctx context.Context) error
 	DeleteFile(ctx context.Context, arg DeleteFileParams) error
+	DeleteMessageDraft(ctx context.Context, arg DeleteMessageDraftParams) error
 	DeleteMessageFile(ctx context.Context, arg DeleteMessageFileParams) error
 	DeleteOrganization(ctx context.Context, id int64) error
 	DeleteUser(ctx context.Context, id int64) error
+	DeleteUser2FA(ctx context.Context, userID int64) error
+	DeleteUserPasswordResetTokens(ctx context.Context, userID int64) error
 	DeleteWorkspace(ctx context.Context, id int64) error
 	DeleteWorkspaceInvitation(ctx context.Context, id int64) error
+	DisableUser2FA(ctx context.Context, userID int64) error
+	EnableUser2FA(ctx context.Context, userID int64) error
 	ExpireWorkspaceInvitation(ctx context.Context, id int64) error
+	GetAccountLockout(ctx context.Context, userID int64) (AccountLockout, error)
 	GetChannel(ctx context.Context, id int64) (Channel, error)
 	GetChannelByID(ctx context.Context, id int64) (Channel, error)
 	GetChannelMembers(ctx context.Context, arg GetChannelMembersParams) ([]GetChannelMembersRow, error)
 	GetChannelMessages(ctx context.Context, arg GetChannelMessagesParams) ([]GetChannelMessagesRow, error)
+	GetChannelUnreadCount(ctx context.Context, arg GetChannelUnreadCountParams) (int32, error)
 	GetChannelWithCreator(ctx context.Context, id int64) (GetChannelWithCreatorRow, error)
+	GetDirectMessageUnreadCount(ctx context.Context, userID int64) (interface{}, error)
 	GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDirectMessagesBetweenUsersParams) ([]GetDirectMessagesBetweenUsersRow, error)
 	GetDuplicateFiles(ctx context.Context, workspaceID int64) ([]GetDuplicateFilesRow, error)
+	GetEmailVerificationToken(ctx context.Context, token string) (EmailVerificationToken, error)
 	GetFile(ctx context.Context, id int64) (File, error)
 	GetFileByHash(ctx context.Context, arg GetFileByHashParams) (File, error)
 	GetFileMessages(ctx context.Context, fileID int64) ([]GetFileMessagesRow, error)
@@ -54,14 +80,36 @@ type Querier interface {
 	GetFileStats(ctx context.Context, workspaceID int64) (GetFileStatsRow, error)
 	GetFileWithPermissionCheck(ctx context.Context, arg GetFileWithPermissionCheckParams) (GetFileWithPermissionCheckRow, error)
 	GetMessageByID(ctx context.Context, id int64) (GetMessageByIDRow, error)
+	GetMessageDraft(ctx context.Context, arg GetMessageDraftParams) (MessageDraft, error)
 	GetMessageFiles(ctx context.Context, messageID int64) ([]GetMessageFilesRow, error)
+	GetMessageMentions(ctx context.Context, messageID int64) ([]GetMessageMentionsRow, error)
+	GetMessageReactionCounts(ctx context.Context, messageID int64) ([]GetMessageReactionCountsRow, error)
+	GetMessageReactions(ctx context.Context, messageID int64) ([]GetMessageReactionsRow, error)
 	GetOnlineUsersInWorkspace(ctx context.Context, workspaceID int64) ([]GetOnlineUsersInWorkspaceRow, error)
 	GetOrganization(ctx context.Context, id int64) (Organization, error)
+	GetPasswordResetToken(ctx context.Context, token string) (PasswordResetToken, error)
 	GetPendingInvitationsForUser(ctx context.Context, inviteeEmail string) ([]GetPendingInvitationsForUserRow, error)
+	GetPinnedMessages(ctx context.Context, channelID int64) ([]GetPinnedMessagesRow, error)
+	GetRecentSecurityEvents(ctx context.Context, arg GetRecentSecurityEventsParams) ([]SecurityEvent, error)
 	GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentWorkspaceMessagesParams) ([]GetRecentWorkspaceMessagesRow, error)
+	GetSecurityEventsByType(ctx context.Context, arg GetSecurityEventsByTypeParams) ([]SecurityEvent, error)
+	GetThreadInfo(ctx context.Context, id int64) (GetThreadInfoRow, error)
+	GetThreadMessages(ctx context.Context, id int64) ([]GetThreadMessagesRow, error)
+	GetThreadReplies(ctx context.Context, arg GetThreadRepliesParams) ([]GetThreadRepliesRow, error)
+	GetUnreadMentions(ctx context.Context, arg GetUnreadMentionsParams) ([]GetUnreadMentionsRow, error)
+	GetUnreadMessages(ctx context.Context, arg GetUnreadMessagesParams) ([]UnreadMessage, error)
 	GetUser(ctx context.Context, id int64) (User, error)
+	GetUser2FA(ctx context.Context, userID int64) (User2fa, error)
+	GetUserActiveSessions(ctx context.Context, userID int64) ([]UserSession, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserChannels(ctx context.Context, arg GetUserChannelsParams) ([]Channel, error)
+	GetUserDrafts(ctx context.Context, arg GetUserDraftsParams) ([]GetUserDraftsRow, error)
+	GetUserEmailVerificationTokens(ctx context.Context, arg GetUserEmailVerificationTokensParams) ([]EmailVerificationToken, error)
+	GetUserMentions(ctx context.Context, arg GetUserMentionsParams) ([]GetUserMentionsRow, error)
+	GetUserReactionsForMessage(ctx context.Context, arg GetUserReactionsForMessageParams) ([]string, error)
+	GetUserSecurityEvents(ctx context.Context, arg GetUserSecurityEventsParams) ([]SecurityEvent, error)
+	GetUserSession(ctx context.Context, sessionToken string) (UserSession, error)
+	GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error)
 	GetUserStatus(ctx context.Context, arg GetUserStatusParams) (UserStatus, error)
 	GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspaceParams) ([]User, error)
 	GetWorkspace(ctx context.Context, id int64) (Workspace, error)
@@ -69,9 +117,14 @@ type Querier interface {
 	GetWorkspaceInvitation(ctx context.Context, id int64) (WorkspaceInvitation, error)
 	GetWorkspaceInvitationByCode(ctx context.Context, invitationCode string) (WorkspaceInvitation, error)
 	GetWorkspaceMemberCount(ctx context.Context, workspaceID sql.NullInt64) (int64, error)
+	GetWorkspaceUnreadCount(ctx context.Context, arg GetWorkspaceUnreadCountParams) (interface{}, error)
 	GetWorkspaceUserStatuses(ctx context.Context, arg GetWorkspaceUserStatusesParams) ([]GetWorkspaceUserStatusesRow, error)
 	GetWorkspaceWithUserCount(ctx context.Context, id int64) (GetWorkspaceWithUserCountRow, error)
+	HasUserReacted(ctx context.Context, arg HasUserReactedParams) (bool, error)
+	IncrementFailedAttempts(ctx context.Context, userID int64) (AccountLockout, error)
+	IsAccountLocked(ctx context.Context, userID int64) (sql.NullBool, error)
 	IsChannelMember(ctx context.Context, arg IsChannelMemberParams) (bool, error)
+	IsMessagePinned(ctx context.Context, messageID int64) (bool, error)
 	ListChannelsByWorkspace(ctx context.Context, arg ListChannelsByWorkspaceParams) ([]Channel, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
 	ListPublicChannelsByWorkspace(ctx context.Context, arg ListPublicChannelsByWorkspaceParams) ([]Channel, error)
@@ -81,16 +134,32 @@ type Querier interface {
 	ListWorkspaceInvitations(ctx context.Context, arg ListWorkspaceInvitationsParams) ([]WorkspaceInvitation, error)
 	ListWorkspaceMembers(ctx context.Context, arg ListWorkspaceMembersParams) ([]ListWorkspaceMembersRow, error)
 	ListWorkspacesByOrganization(ctx context.Context, arg ListWorkspacesByOrganizationParams) ([]Workspace, error)
+	LockAccount(ctx context.Context, arg LockAccountParams) error
+	MarkChannelAsRead(ctx context.Context, arg MarkChannelAsReadParams) error
+	MarkDirectMessagesAsRead(ctx context.Context, arg MarkDirectMessagesAsReadParams) error
+	PinMessage(ctx context.Context, arg PinMessageParams) (PinnedMessage, error)
 	RemoveChannelMember(ctx context.Context, arg RemoveChannelMemberParams) error
+	RemoveMessageReaction(ctx context.Context, arg RemoveMessageReactionParams) error
 	RemoveUserFromWorkspace(ctx context.Context, arg RemoveUserFromWorkspaceParams) (User, error)
+	ResetFailedAttempts(ctx context.Context, userID int64) error
+	ResetUnreadCount(ctx context.Context, arg ResetUnreadCountParams) error
+	SaveMessageDraft(ctx context.Context, arg SaveMessageDraftParams) (MessageDraft, error)
+	SearchMessages(ctx context.Context, arg SearchMessagesParams) ([]SearchMessagesRow, error)
+	SearchMessagesInThread(ctx context.Context, arg SearchMessagesInThreadParams) ([]SearchMessagesInThreadRow, error)
 	SetUsersOfflineAfterInactivity(ctx context.Context, lastActivityAt time.Time) error
 	SoftDeleteMessage(ctx context.Context, id int64) error
+	UnlockAccount(ctx context.Context, userID int64) error
+	UnlockExpiredAccounts(ctx context.Context) error
+	UnpinMessage(ctx context.Context, messageID int64) error
 	UpdateChannel(ctx context.Context, arg UpdateChannelParams) (Channel, error)
 	UpdateFileThumbnail(ctx context.Context, arg UpdateFileThumbnailParams) error
 	UpdateFileUploadStatus(ctx context.Context, arg UpdateFileUploadStatusParams) error
 	UpdateLastActivity(ctx context.Context, arg UpdateLastActivityParams) error
 	UpdateMessageContent(ctx context.Context, arg UpdateMessageContentParams) (Message, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
+	UpdateSessionLastUsed(ctx context.Context, sessionToken string) error
+	UpdateUser2FABackupCodes(ctx context.Context, arg UpdateUser2FABackupCodesParams) error
+	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) (User, error)
 	UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error)
 	UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (User, error)
@@ -98,6 +167,9 @@ type Querier interface {
 	UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams) (Workspace, error)
 	UpdateWorkspaceMemberRole(ctx context.Context, arg UpdateWorkspaceMemberRoleParams) (User, error)
 	UpsertUserStatus(ctx context.Context, arg UpsertUserStatusParams) (UserStatus, error)
+	UseEmailVerificationToken(ctx context.Context, token string) error
+	UsePasswordResetToken(ctx context.Context, token string) error
+	VerifyUserEmail(ctx context.Context, id int64) error
 }
 
 var _ Querier = (*Queries)(nil)

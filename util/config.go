@@ -30,6 +30,23 @@ type Config struct {
 	AWSS3Bucket  string `mapstructure:"AWS_S3_BUCKET"`
 	AWSRegion    string `mapstructure:"AWS_REGION"`
 	UseS3Storage bool   `mapstructure:"USE_S3_STORAGE"`
+
+	// Email configuration
+	SMTPHost     string `mapstructure:"SMTP_HOST"`
+	SMTPPort     int    `mapstructure:"SMTP_PORT"`
+	SMTPUsername string `mapstructure:"SMTP_USERNAME"`
+	SMTPPassword string `mapstructure:"SMTP_PASSWORD"`
+	FromEmail    string `mapstructure:"FROM_EMAIL"`
+	FromName     string `mapstructure:"FROM_NAME"`
+	BaseURL      string `mapstructure:"BASE_URL"`
+
+	// Rate limiting configuration
+	EnableRateLimit          bool   `mapstructure:"ENABLE_RATE_LIMIT"`
+	RateLimitMode            string `mapstructure:"RATE_LIMIT_MODE"` // "default", "strict", "permissive"
+	AuthRequestsPerMinute    int    `mapstructure:"AUTH_REQUESTS_PER_MINUTE"`
+	APIRequestsPerMinute     int    `mapstructure:"API_REQUESTS_PER_MINUTE"`
+	UploadRequestsPerMinute  int    `mapstructure:"UPLOAD_REQUESTS_PER_MINUTE"`
+	MessageRequestsPerMinute int    `mapstructure:"MESSAGE_REQUESTS_PER_MINUTE"`
 }
 
 // LoadConfig reads configuration from file or environment variables.
@@ -54,6 +71,20 @@ func LoadConfig(path string) (config Config, err error) {
 	viper.SetDefault("ENABLE_FILE_DEDUPLICATION", true)
 	viper.SetDefault("ENABLE_THUMBNAILS", true)
 	viper.SetDefault("USE_S3_STORAGE", false)
+
+	// Set default values for email configuration
+	viper.SetDefault("SMTP_HOST", "localhost")
+	viper.SetDefault("SMTP_PORT", 587)
+	viper.SetDefault("FROM_NAME", "GoSlack")
+	viper.SetDefault("BASE_URL", "http://localhost:3000")
+
+	// Set default values for rate limiting
+	viper.SetDefault("ENABLE_RATE_LIMIT", true)
+	viper.SetDefault("RATE_LIMIT_MODE", "default")
+	viper.SetDefault("AUTH_REQUESTS_PER_MINUTE", 5)
+	viper.SetDefault("API_REQUESTS_PER_MINUTE", 100)
+	viper.SetDefault("UPLOAD_REQUESTS_PER_MINUTE", 10)
+	viper.SetDefault("MESSAGE_REQUESTS_PER_MINUTE", 60)
 
 	err = viper.ReadInConfig()
 	if err != nil {

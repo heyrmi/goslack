@@ -63,6 +63,10 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
+	// Add IP address and user agent for security tracking
+	req.IPAddress = getClientIP(ctx)
+	req.UserAgent = ctx.GetHeader("User-Agent")
+
 	user, err := server.userService.LoginUser(ctx, req)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))

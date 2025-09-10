@@ -38,7 +38,7 @@ INSERT INTO users (
 ) VALUES (
     $1, $2, $3, $4, $5
 )
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type CreateUserParams struct {
@@ -69,6 +69,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -84,7 +86,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -102,12 +104,14 @@ func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at FROM users
 WHERE email = $1 LIMIT 1
 `
 
@@ -125,12 +129,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
 
 const getUsersByWorkspace = `-- name: GetUsersByWorkspace :many
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at FROM users
 WHERE workspace_id = $1
 ORDER BY created_at ASC
 LIMIT $2
@@ -163,6 +169,8 @@ func (q *Queries) GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspa
 			&i.CreatedAt,
 			&i.WorkspaceID,
 			&i.Role,
+			&i.EmailVerified,
+			&i.EmailVerifiedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -178,7 +186,7 @@ func (q *Queries) GetUsersByWorkspace(ctx context.Context, arg GetUsersByWorkspa
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role FROM users
+SELECT id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at FROM users
 WHERE organization_id = $1
 ORDER BY id
 LIMIT $2
@@ -211,6 +219,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.CreatedAt,
 			&i.WorkspaceID,
 			&i.Role,
+			&i.EmailVerified,
+			&i.EmailVerifiedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -225,13 +235,29 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
+const updateUserEmail = `-- name: UpdateUserEmail :exec
+UPDATE users 
+SET email = $2, email_verified = false, email_verified_at = NULL
+WHERE id = $1
+`
+
+type UpdateUserEmailParams struct {
+	ID    int64  `json:"id"`
+	Email string `json:"email"`
+}
+
+func (q *Queries) UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserEmail, arg.ID, arg.Email)
+	return err
+}
+
 const updateUserPassword = `-- name: UpdateUserPassword :one
 UPDATE users
 SET
     hashed_password = $2,
     password_changed_at = now()
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type UpdateUserPasswordParams struct {
@@ -253,6 +279,8 @@ func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPassword
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -263,7 +291,7 @@ SET
     first_name = $2,
     last_name = $3
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type UpdateUserProfileParams struct {
@@ -286,6 +314,8 @@ func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfilePa
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -294,7 +324,7 @@ const updateUserRole = `-- name: UpdateUserRole :one
 UPDATE users
 SET role = $2
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type UpdateUserRoleParams struct {
@@ -316,6 +346,8 @@ func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) 
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -326,7 +358,7 @@ SET
     workspace_id = $2,
     role = $3
 WHERE id = $1
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type UpdateUserWorkspaceParams struct {
@@ -349,6 +381,19 @@ func (q *Queries) UpdateUserWorkspace(ctx context.Context, arg UpdateUserWorkspa
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
+}
+
+const verifyUserEmail = `-- name: VerifyUserEmail :exec
+UPDATE users 
+SET email_verified = true, email_verified_at = now()
+WHERE id = $1
+`
+
+func (q *Queries) VerifyUserEmail(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, verifyUserEmail, id)
+	return err
 }

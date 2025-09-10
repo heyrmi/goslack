@@ -242,8 +242,41 @@ func (h *Hub) BroadcastToWorkspace(workspaceID int64, message *service.WSMessage
 	}
 }
 
-// BroadcastToChannel sends a message to all clients in a specific channel
+// BroadcastToChannel sends a message to all clients in a specific channel (legacy interface)
 func (h *Hub) BroadcastToChannel(workspaceID, channelID int64, message *service.WSMessage) {
+	h.broadcastToChannel(workspaceID, channelID, message)
+}
+
+// BroadcastToChannelGeneric sends a generic message to all clients in a specific channel
+func (h *Hub) BroadcastToChannelGeneric(workspaceID, channelID int64, message interface{}) {
+	// Convert interface{} to WSMessage if needed
+	var wsMessage *service.WSMessage
+	switch msg := message.(type) {
+	case *service.WSMessage:
+		wsMessage = msg
+	case map[string]interface{}:
+		// Create WSMessage from map
+		wsMessage = &service.WSMessage{
+			Type:        msg["type"].(string),
+			WorkspaceID: workspaceID,
+			ChannelID:   &channelID,
+			Data:        msg,
+		}
+	default:
+		// Create generic WSMessage
+		wsMessage = &service.WSMessage{
+			Type:        "generic",
+			WorkspaceID: workspaceID,
+			ChannelID:   &channelID,
+			Data:        message,
+		}
+	}
+
+	h.broadcastToChannel(workspaceID, channelID, wsMessage)
+}
+
+// broadcastToChannel is the internal method that handles the actual broadcasting
+func (h *Hub) broadcastToChannel(workspaceID, channelID int64, message *service.WSMessage) {
 	message.WorkspaceID = workspaceID
 	message.ChannelID = &channelID
 	message.Timestamp = time.Now()
@@ -255,8 +288,37 @@ func (h *Hub) BroadcastToChannel(workspaceID, channelID int64, message *service.
 	}
 }
 
-// BroadcastToUser sends a message to all connections of a specific user
+// BroadcastToUser sends a message to all connections of a specific user (legacy interface)
 func (h *Hub) BroadcastToUser(userID int64, message *service.WSMessage) {
+	h.broadcastToUser(userID, message)
+}
+
+// BroadcastToUserGeneric sends a generic message to all connections of a specific user
+func (h *Hub) BroadcastToUserGeneric(userID int64, message interface{}) {
+	// Convert interface{} to WSMessage if needed
+	var wsMessage *service.WSMessage
+	switch msg := message.(type) {
+	case *service.WSMessage:
+		wsMessage = msg
+	case map[string]interface{}:
+		// Create WSMessage from map
+		wsMessage = &service.WSMessage{
+			Type: msg["type"].(string),
+			Data: msg,
+		}
+	default:
+		// Create generic WSMessage
+		wsMessage = &service.WSMessage{
+			Type: "generic",
+			Data: message,
+		}
+	}
+
+	h.broadcastToUser(userID, wsMessage)
+}
+
+// broadcastToUser is the internal method that handles the actual broadcasting
+func (h *Hub) broadcastToUser(userID int64, message *service.WSMessage) {
 	h.mutex.RLock()
 	defer h.mutex.RUnlock()
 
@@ -368,7 +430,7 @@ func (c *Client) handleIncomingMessage(message map[string]interface{}) {
 				UserID:      c.userID,
 				Timestamp:   time.Now(),
 			}
-			c.hub.BroadcastToChannel(c.workspaceID, int64(channelID), typingMsg)
+			c.hub.broadcastToChannel(c.workspaceID, int64(channelID), typingMsg)
 		}
 	case "typing_stop":
 		// Handle typing indicator stop
@@ -381,7 +443,7 @@ func (c *Client) handleIncomingMessage(message map[string]interface{}) {
 				UserID:      c.userID,
 				Timestamp:   time.Now(),
 			}
-			c.hub.BroadcastToChannel(c.workspaceID, int64(channelID), typingMsg)
+			c.hub.broadcastToChannel(c.workspaceID, int64(channelID), typingMsg)
 		}
 	}
 }
@@ -407,13 +469,18 @@ func (server *Server) handleWebSocket(c *gin.Context) {
 	}
 
 	// Create client
+	var workspaceID int64
+	if currentUser.WorkspaceID.Valid {
+		workspaceID = currentUser.WorkspaceID.Int64
+	}
+
 	client := &Client{
 		hub:         server.hub,
 		conn:        conn,
 		send:        make(chan *service.WSMessage, 256),
 		userID:      currentUser.ID,
-		workspaceID: *currentUser.WorkspaceID,
-		user:        currentUser,
+		workspaceID: workspaceID,
+		user:        server.userService.ToUserResponse(*currentUser),
 		isActive:    true,
 	}
 

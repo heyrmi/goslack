@@ -19,7 +19,7 @@ SET
 WHERE users.id = $1 AND users.organization_id = (
     SELECT workspaces.organization_id FROM workspaces WHERE workspaces.id = $2
 )
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type AddUserToWorkspaceParams struct {
@@ -42,6 +42,8 @@ func (q *Queries) AddUserToWorkspace(ctx context.Context, arg AddUserToWorkspace
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -287,7 +289,7 @@ SET
     workspace_id = NULL,
     role = 'member'
 WHERE users.id = $1 AND users.workspace_id = $2
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type RemoveUserFromWorkspaceParams struct {
@@ -309,6 +311,8 @@ func (q *Queries) RemoveUserFromWorkspace(ctx context.Context, arg RemoveUserFro
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }
@@ -341,7 +345,7 @@ const updateWorkspaceMemberRole = `-- name: UpdateWorkspaceMemberRole :one
 UPDATE users
 SET role = $3
 WHERE users.id = $1 AND users.workspace_id = $2
-RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role
+RETURNING id, organization_id, email, first_name, last_name, hashed_password, password_changed_at, created_at, workspace_id, role, email_verified, email_verified_at
 `
 
 type UpdateWorkspaceMemberRoleParams struct {
@@ -364,6 +368,8 @@ func (q *Queries) UpdateWorkspaceMemberRole(ctx context.Context, arg UpdateWorks
 		&i.CreatedAt,
 		&i.WorkspaceID,
 		&i.Role,
+		&i.EmailVerified,
+		&i.EmailVerifiedAt,
 	)
 	return i, err
 }

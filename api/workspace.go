@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/service"
 	"github.com/lib/pq"
 )
@@ -36,7 +37,7 @@ func (server *Server) createWorkspace(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	workspace, err := server.workspaceService.CreateWorkspace(ctx, user.ID, req)
 	if err != nil {
@@ -118,7 +119,7 @@ func (server *Server) listWorkspaces(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	workspaces, err := server.workspaceService.ListWorkspacesByOrganization(
 		ctx,

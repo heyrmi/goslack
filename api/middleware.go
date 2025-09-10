@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/service"
 	"github.com/heyrmi/goslack/token"
 )
@@ -92,7 +93,7 @@ func authWithUserMiddleware(tokenMaker token.Maker, userService *service.UserSer
 		ctx.Set(authorizationPayloadKey, payload)
 
 		// Get the payload and load the user
-		user, err := userService.GetUserByEmail(ctx, payload.Username)
+		user, err := userService.GetUserByEmailRaw(ctx, payload.Username)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
 			return
@@ -122,7 +123,7 @@ func requireWorkspaceMember(userService *service.UserService) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-		user := currentUser.(service.UserResponse)
+		user := currentUser.(*db.User)
 
 		// Check if user is a member of the workspace
 		isMember, err := userService.IsWorkspaceMember(ctx, user.ID, workspaceID)
@@ -160,7 +161,7 @@ func requireWorkspaceAdmin(userService *service.UserService) gin.HandlerFunc {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-		user := currentUser.(service.UserResponse)
+		user := currentUser.(*db.User)
 
 		// Check if user is an admin of the workspace
 		isAdmin, err := userService.IsWorkspaceAdmin(ctx, user.ID, workspaceID)
@@ -198,30 +199,30 @@ func requireSameWorkspaceForUserRole(userService *service.UserService) gin.Handl
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 			return
 		}
-		user := currentUser.(service.UserResponse)
+		user := currentUser.(*db.User)
 
 		// Get target user to check their workspace
-		targetUser, err := userService.GetUser(ctx, targetUserID)
+		targetUser, err := userService.GetUserRaw(ctx, targetUserID)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, errorResponse(err))
 			return
 		}
 
 		// Check if both users are in the same workspace
-		if user.WorkspaceID == nil || targetUser.WorkspaceID == nil {
+		if !user.WorkspaceID.Valid || !targetUser.WorkspaceID.Valid {
 			err := errors.New("users must be in a workspace")
 			ctx.AbortWithStatusJSON(http.StatusBadRequest, errorResponse(err))
 			return
 		}
 
-		if *user.WorkspaceID != *targetUser.WorkspaceID {
+		if user.WorkspaceID.Int64 != targetUser.WorkspaceID.Int64 {
 			err := errors.New("access denied: users are not in the same workspace")
 			ctx.AbortWithStatusJSON(http.StatusForbidden, errorResponse(err))
 			return
 		}
 
 		// Check if current user is admin of the workspace
-		isAdmin, err := userService.IsWorkspaceAdmin(ctx, user.ID, *user.WorkspaceID)
+		isAdmin, err := userService.IsWorkspaceAdmin(ctx, user.ID, user.WorkspaceID.Int64)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, errorResponse(err))
 			return

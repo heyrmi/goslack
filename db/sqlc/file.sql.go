@@ -310,7 +310,7 @@ func (q *Queries) GetFileByHash(ctx context.Context, arg GetFileByHashParams) (F
 }
 
 const getFileMessages = `-- name: GetFileMessages :many
-SELECT m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, u.first_name as sender_first_name, u.last_name as sender_last_name, u.email as sender_email
+SELECT m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at, u.first_name as sender_first_name, u.last_name as sender_last_name, u.email as sender_email
 FROM message_files mf
 JOIN messages m ON mf.message_id = m.id
 JOIN users u ON m.sender_id = u.id
@@ -331,6 +331,8 @@ type GetFileMessagesRow struct {
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
 	ContentType     string        `json:"content_type"`
+	ReplyCount      int32         `json:"reply_count"`
+	LastReplyAt     sql.NullTime  `json:"last_reply_at"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -358,6 +360,8 @@ func (q *Queries) GetFileMessages(ctx context.Context, fileID int64) ([]GetFileM
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,

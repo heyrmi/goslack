@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net"
 
 	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/token"
@@ -13,9 +14,10 @@ import (
 
 // UserService handles user-related business logic
 type UserService struct {
-	store      db.Store
-	tokenMaker token.Maker
-	config     util.Config
+	store       db.Store
+	tokenMaker  token.Maker
+	config      util.Config
+	authService *AuthService // Add reference to auth service for lockout checks
 }
 
 // NewUserService creates a new user service
@@ -25,6 +27,11 @@ func NewUserService(store db.Store, tokenMaker token.Maker, config util.Config) 
 		tokenMaker: tokenMaker,
 		config:     config,
 	}
+}
+
+// SetAuthService sets the auth service reference (to avoid circular dependency)
+func (s *UserService) SetAuthService(authService *AuthService) {
+	s.authService = authService
 }
 
 // CreateUser creates a new user in the specified organization
@@ -49,7 +56,7 @@ func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (Us
 		return UserResponse{}, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
 }
 
 // LoginUser authenticates a user and returns an access token
@@ -63,10 +70,48 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginUserRequest) (Logi
 		return LoginUserResponse{}, fmt.Errorf("failed to find user: %w", err)
 	}
 
+	// Check if account is locked (if auth service is available)
+	if s.authService != nil {
+		locked, err := s.authService.IsAccountLocked(ctx, user.ID)
+		if err != nil {
+			return LoginUserResponse{}, fmt.Errorf("failed to check account lock status: %w", err)
+		}
+		if locked {
+			// Log failed login attempt due to locked account
+			s.logSecurityEvent(ctx, user.ID, "login_failed", "Login attempt on locked account", req.IPAddress, req.UserAgent)
+			return LoginUserResponse{}, errors.New("account is locked due to security reasons")
+		}
+	}
+
 	// Check if password is correct
 	err = util.CheckPassword(req.Password, user.HashedPassword)
 	if err != nil {
+		// Handle failed login attempt
+		if s.authService != nil {
+			err = s.authService.CheckAccountLockout(ctx, user.ID, req.IPAddress, req.UserAgent)
+			if err != nil {
+				// Log error but don't fail the login response
+				fmt.Printf("Failed to update account lockout: %v\n", err)
+			}
+		}
+
+		// Log failed login attempt
+		s.logSecurityEvent(ctx, user.ID, "login_failed", "Invalid password", req.IPAddress, req.UserAgent)
 		return LoginUserResponse{}, errors.New("incorrect password")
+	}
+
+	// Check email verification
+	if !user.EmailVerified {
+		return LoginUserResponse{}, errors.New("email not verified. Please check your email for verification link")
+	}
+
+	// Reset failed attempts on successful login
+	if s.authService != nil {
+		err = s.authService.ResetFailedAttempts(ctx, user.ID)
+		if err != nil {
+			// Log error but don't fail the login
+			fmt.Printf("Failed to reset failed attempts: %v\n", err)
+		}
 	}
 
 	// Create access token
@@ -78,9 +123,12 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginUserRequest) (Logi
 		return LoginUserResponse{}, fmt.Errorf("failed to create access token: %w", err)
 	}
 
+	// Log successful login
+	s.logSecurityEvent(ctx, user.ID, "login_success", "Successful login", req.IPAddress, req.UserAgent)
+
 	rsp := LoginUserResponse{
 		AccessToken: accessToken,
-		User:        s.toUserResponse(user),
+		User:        s.ToUserResponse(user),
 	}
 
 	return rsp, nil
@@ -96,7 +144,7 @@ func (s *UserService) GetUser(ctx context.Context, userID int64) (UserResponse, 
 		return UserResponse{}, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
 }
 
 // GetUserByEmail retrieves a user by email
@@ -109,7 +157,33 @@ func (s *UserService) GetUserByEmail(ctx context.Context, email string) (UserRes
 		return UserResponse{}, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
+}
+
+// GetUserByEmailRaw retrieves a raw db.User by email (for internal use)
+func (s *UserService) GetUserByEmailRaw(ctx context.Context, email string) (*db.User, error) {
+	user, err := s.store.GetUserByEmail(ctx, email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// GetUserRaw retrieves a raw db.User by ID (for internal use)
+func (s *UserService) GetUserRaw(ctx context.Context, userID int64) (*db.User, error) {
+	user, err := s.store.GetUser(ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
 }
 
 // UpdateUserProfile updates a user's profile information
@@ -128,7 +202,7 @@ func (s *UserService) UpdateUserProfile(ctx context.Context, userID int64, req U
 		return UserResponse{}, fmt.Errorf("failed to update user profile: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
 }
 
 // ChangePassword changes a user's password
@@ -183,7 +257,7 @@ func (s *UserService) ListUsers(ctx context.Context, organizationID int64, limit
 
 	userResponses := make([]UserResponse, len(users))
 	for i, user := range users {
-		userResponses[i] = s.toUserResponse(user)
+		userResponses[i] = s.ToUserResponse(user)
 	}
 
 	return userResponses, nil
@@ -204,7 +278,7 @@ func (s *UserService) UpdateUserRole(ctx context.Context, userID int64, role str
 		return UserResponse{}, fmt.Errorf("failed to update user role: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
 }
 
 // AssignUserToWorkspace assigns a user to a workspace with a specific role
@@ -223,7 +297,7 @@ func (s *UserService) AssignUserToWorkspace(ctx context.Context, userID, workspa
 		return UserResponse{}, fmt.Errorf("failed to assign user to workspace: %w", err)
 	}
 
-	return s.toUserResponse(user), nil
+	return s.ToUserResponse(user), nil
 }
 
 // CheckUserWorkspaceRole checks if a user has a specific role in a workspace
@@ -281,7 +355,7 @@ func (s *UserService) UserBelongsToWorkspace(userID, workspaceID int64) bool {
 }
 
 // toUserResponse converts a db.User to UserResponse (removes sensitive data)
-func (s *UserService) toUserResponse(user db.User) UserResponse {
+func (s *UserService) ToUserResponse(user db.User) UserResponse {
 	var workspaceID *int64
 	if user.WorkspaceID.Valid {
 		workspaceID = &user.WorkspaceID.Int64
@@ -296,5 +370,19 @@ func (s *UserService) toUserResponse(user db.User) UserResponse {
 		WorkspaceID:    workspaceID,
 		Role:           user.Role,
 		CreatedAt:      user.CreatedAt,
+	}
+}
+
+// logSecurityEvent logs a security event (helper method)
+func (s *UserService) logSecurityEvent(ctx context.Context, userID int64, eventType, description, ipAddress, userAgent string) {
+	if s.authService != nil {
+		req := SecurityEventRequest{
+			UserID:      userID,
+			EventType:   eventType,
+			Description: description,
+			IPAddress:   net.ParseIP(ipAddress),
+			UserAgent:   userAgent,
+		}
+		s.authService.logSecurityEvent(ctx, req)
 	}
 }

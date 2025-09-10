@@ -13,8 +13,10 @@ type CreateUserRequest struct {
 
 // LoginUserRequest represents the request to login a user
 type LoginUserRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required,min=6"`
+	IPAddress string `json:"-"` // Set by middleware, not from JSON
+	UserAgent string `json:"-"` // Set by middleware, not from JSON
 }
 
 // LoginUserResponse represents the response after successful login
