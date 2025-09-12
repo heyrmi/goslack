@@ -15,6 +15,7 @@ type Querier interface {
 	AddChannelMember(ctx context.Context, arg AddChannelMemberParams) (ChannelMember, error)
 	AddMessageReaction(ctx context.Context, arg AddMessageReactionParams) (MessageReaction, error)
 	AddUserToWorkspace(ctx context.Context, arg AddUserToWorkspaceParams) (User, error)
+	CancelScheduledMessage(ctx context.Context, arg CancelScheduledMessageParams) error
 	CheckChannelMembership(ctx context.Context, arg CheckChannelMembershipParams) (string, error)
 	// Check if user has access to file through direct ownership, channel membership, or direct share
 	CheckFileAccess(ctx context.Context, arg CheckFileAccessParams) (bool, error)
@@ -23,6 +24,7 @@ type Querier interface {
 	CheckUserWorkspaceRole(ctx context.Context, arg CheckUserWorkspaceRoleParams) (string, error)
 	CleanupIncompleteUploads(ctx context.Context) error
 	CleanupOldDrafts(ctx context.Context, updatedAt time.Time) error
+	CleanupOldScheduledMessages(ctx context.Context, createdAt time.Time) error
 	CleanupOldSecurityEvents(ctx context.Context, createdAt time.Time) error
 	CleanupOldSessions(ctx context.Context, lastUsedAt time.Time) error
 	CreateAccountLockout(ctx context.Context, userID int64) (AccountLockout, error)
@@ -34,8 +36,10 @@ type Querier interface {
 	CreateFileShare(ctx context.Context, arg CreateFileShareParams) (FileShare, error)
 	CreateMessageFile(ctx context.Context, arg CreateMessageFileParams) (MessageFile, error)
 	CreateMessageMention(ctx context.Context, arg CreateMessageMentionParams) (MessageMention, error)
+	CreateNotificationPreference(ctx context.Context, arg CreateNotificationPreferenceParams) (NotificationPreference, error)
 	CreateOrganization(ctx context.Context, name string) (Organization, error)
 	CreatePasswordResetToken(ctx context.Context, arg CreatePasswordResetTokenParams) (PasswordResetToken, error)
+	CreateScheduledMessage(ctx context.Context, arg CreateScheduledMessageParams) (ScheduledMessage, error)
 	CreateSecurityEvent(ctx context.Context, arg CreateSecurityEventParams) (SecurityEvent, error)
 	CreateThreadReply(ctx context.Context, arg CreateThreadReplyParams) (Message, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -53,9 +57,12 @@ type Querier interface {
 	DeleteFile(ctx context.Context, arg DeleteFileParams) error
 	DeleteMessageDraft(ctx context.Context, arg DeleteMessageDraftParams) error
 	DeleteMessageFile(ctx context.Context, arg DeleteMessageFileParams) error
+	DeleteNotificationPreference(ctx context.Context, arg DeleteNotificationPreferenceParams) error
 	DeleteOrganization(ctx context.Context, id int64) error
+	DeleteScheduledMessage(ctx context.Context, arg DeleteScheduledMessageParams) error
 	DeleteUser(ctx context.Context, id int64) error
 	DeleteUser2FA(ctx context.Context, userID int64) error
+	DeleteUserNotificationPreferences(ctx context.Context, userID int64) error
 	DeleteUserPasswordResetTokens(ctx context.Context, userID int64) error
 	DeleteWorkspace(ctx context.Context, id int64) error
 	DeleteWorkspaceInvitation(ctx context.Context, id int64) error
@@ -79,19 +86,24 @@ type Querier interface {
 	GetFileShares(ctx context.Context, fileID int64) ([]GetFileSharesRow, error)
 	GetFileStats(ctx context.Context, workspaceID int64) (GetFileStatsRow, error)
 	GetFileWithPermissionCheck(ctx context.Context, arg GetFileWithPermissionCheckParams) (GetFileWithPermissionCheckRow, error)
+	GetGlobalNotificationPreference(ctx context.Context, arg GetGlobalNotificationPreferenceParams) (NotificationPreference, error)
 	GetMessageByID(ctx context.Context, id int64) (GetMessageByIDRow, error)
 	GetMessageDraft(ctx context.Context, arg GetMessageDraftParams) (MessageDraft, error)
 	GetMessageFiles(ctx context.Context, messageID int64) ([]GetMessageFilesRow, error)
 	GetMessageMentions(ctx context.Context, messageID int64) ([]GetMessageMentionsRow, error)
 	GetMessageReactionCounts(ctx context.Context, messageID int64) ([]GetMessageReactionCountsRow, error)
 	GetMessageReactions(ctx context.Context, messageID int64) ([]GetMessageReactionsRow, error)
+	GetNotificationPreference(ctx context.Context, arg GetNotificationPreferenceParams) (NotificationPreference, error)
 	GetOnlineUsersInWorkspace(ctx context.Context, workspaceID int64) ([]GetOnlineUsersInWorkspaceRow, error)
 	GetOrganization(ctx context.Context, id int64) (Organization, error)
 	GetPasswordResetToken(ctx context.Context, token string) (PasswordResetToken, error)
 	GetPendingInvitationsForUser(ctx context.Context, inviteeEmail string) ([]GetPendingInvitationsForUserRow, error)
+	GetPendingScheduledMessages(ctx context.Context, limit int32) ([]ScheduledMessage, error)
 	GetPinnedMessages(ctx context.Context, channelID int64) ([]GetPinnedMessagesRow, error)
 	GetRecentSecurityEvents(ctx context.Context, arg GetRecentSecurityEventsParams) ([]SecurityEvent, error)
 	GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentWorkspaceMessagesParams) ([]GetRecentWorkspaceMessagesRow, error)
+	GetScheduledMessage(ctx context.Context, arg GetScheduledMessageParams) (ScheduledMessage, error)
+	GetScheduledMessagesStats(ctx context.Context, arg GetScheduledMessagesStatsParams) (GetScheduledMessagesStatsRow, error)
 	GetSecurityEventsByType(ctx context.Context, arg GetSecurityEventsByTypeParams) ([]SecurityEvent, error)
 	GetThreadInfo(ctx context.Context, id int64) (GetThreadInfoRow, error)
 	GetThreadMessages(ctx context.Context, id int64) ([]GetThreadMessagesRow, error)
@@ -106,7 +118,9 @@ type Querier interface {
 	GetUserDrafts(ctx context.Context, arg GetUserDraftsParams) ([]GetUserDraftsRow, error)
 	GetUserEmailVerificationTokens(ctx context.Context, arg GetUserEmailVerificationTokensParams) ([]EmailVerificationToken, error)
 	GetUserMentions(ctx context.Context, arg GetUserMentionsParams) ([]GetUserMentionsRow, error)
+	GetUserNotificationPreferences(ctx context.Context, arg GetUserNotificationPreferencesParams) ([]NotificationPreference, error)
 	GetUserReactionsForMessage(ctx context.Context, arg GetUserReactionsForMessageParams) ([]string, error)
+	GetUserScheduledMessages(ctx context.Context, arg GetUserScheduledMessagesParams) ([]GetUserScheduledMessagesRow, error)
 	GetUserSecurityEvents(ctx context.Context, arg GetUserSecurityEventsParams) ([]SecurityEvent, error)
 	GetUserSession(ctx context.Context, sessionToken string) (UserSession, error)
 	GetUserSessionByRefreshToken(ctx context.Context, refreshToken string) (UserSession, error)
@@ -124,6 +138,7 @@ type Querier interface {
 	IncrementFailedAttempts(ctx context.Context, userID int64) (AccountLockout, error)
 	IsAccountLocked(ctx context.Context, userID int64) (sql.NullBool, error)
 	IsChannelMember(ctx context.Context, arg IsChannelMemberParams) (bool, error)
+	IsInDoNotDisturbMode(ctx context.Context, arg IsInDoNotDisturbModeParams) (interface{}, error)
 	IsMessagePinned(ctx context.Context, messageID int64) (bool, error)
 	ListChannelsByWorkspace(ctx context.Context, arg ListChannelsByWorkspaceParams) ([]Channel, error)
 	ListOrganizations(ctx context.Context, arg ListOrganizationsParams) ([]Organization, error)
@@ -137,6 +152,7 @@ type Querier interface {
 	LockAccount(ctx context.Context, arg LockAccountParams) error
 	MarkChannelAsRead(ctx context.Context, arg MarkChannelAsReadParams) error
 	MarkDirectMessagesAsRead(ctx context.Context, arg MarkDirectMessagesAsReadParams) error
+	MarkScheduledMessageAsSent(ctx context.Context, id int64) error
 	PinMessage(ctx context.Context, arg PinMessageParams) (PinnedMessage, error)
 	RemoveChannelMember(ctx context.Context, arg RemoveChannelMemberParams) error
 	RemoveMessageReaction(ctx context.Context, arg RemoveMessageReactionParams) error
@@ -156,7 +172,9 @@ type Querier interface {
 	UpdateFileUploadStatus(ctx context.Context, arg UpdateFileUploadStatusParams) error
 	UpdateLastActivity(ctx context.Context, arg UpdateLastActivityParams) error
 	UpdateMessageContent(ctx context.Context, arg UpdateMessageContentParams) (Message, error)
+	UpdateNotificationPreference(ctx context.Context, arg UpdateNotificationPreferenceParams) (NotificationPreference, error)
 	UpdateOrganization(ctx context.Context, arg UpdateOrganizationParams) (Organization, error)
+	UpdateScheduledMessage(ctx context.Context, arg UpdateScheduledMessageParams) (ScheduledMessage, error)
 	UpdateSessionLastUsed(ctx context.Context, sessionToken string) error
 	UpdateUser2FABackupCodes(ctx context.Context, arg UpdateUser2FABackupCodesParams) error
 	UpdateUserEmail(ctx context.Context, arg UpdateUserEmailParams) error
@@ -166,6 +184,7 @@ type Querier interface {
 	UpdateUserWorkspace(ctx context.Context, arg UpdateUserWorkspaceParams) (User, error)
 	UpdateWorkspace(ctx context.Context, arg UpdateWorkspaceParams) (Workspace, error)
 	UpdateWorkspaceMemberRole(ctx context.Context, arg UpdateWorkspaceMemberRoleParams) (User, error)
+	UpsertNotificationPreference(ctx context.Context, arg UpsertNotificationPreferenceParams) (NotificationPreference, error)
 	UpsertUserStatus(ctx context.Context, arg UpsertUserStatusParams) (UserStatus, error)
 	UseEmailVerificationToken(ctx context.Context, token string) error
 	UsePasswordResetToken(ctx context.Context, token string) error

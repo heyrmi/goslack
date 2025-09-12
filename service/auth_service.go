@@ -25,7 +25,7 @@ const (
 type AuthService struct {
 	store        db.Store
 	tokenMaker   token.Maker
-	emailService *EmailService
+	emailService EmailServiceInterface
 	config       util.Config
 }
 
@@ -71,7 +71,7 @@ type SecurityEventRequest struct {
 	Metadata    map[string]interface{} `json:"metadata"`
 }
 
-func NewAuthService(store db.Store, tokenMaker token.Maker, emailService *EmailService, config util.Config) *AuthService {
+func NewAuthService(store db.Store, tokenMaker token.Maker, emailService EmailServiceInterface, config util.Config) *AuthService {
 	return &AuthService{
 		store:        store,
 		tokenMaker:   tokenMaker,

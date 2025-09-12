@@ -20,6 +20,15 @@ type EmailConfig struct {
 	BaseURL      string
 }
 
+// EmailServiceInterface defines the interface for email operations
+type EmailServiceInterface interface {
+	SendEmailVerification(email, token, firstName string) error
+	SendPasswordReset(email, token, firstName string) error
+	SendWelcomeEmail(email, firstName string) error
+	SendSecurityAlert(email, firstName, eventType, description string) error
+	GenerateSecureToken() (string, error)
+}
+
 type EmailService struct {
 	config EmailConfig
 }

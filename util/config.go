@@ -20,12 +20,14 @@ type Config struct {
 	WSMaxConnectionsPerUser int           `mapstructure:"WS_MAX_CONNECTIONS_PER_USER"`
 	WSPingInterval          time.Duration `mapstructure:"WS_PING_INTERVAL"`
 	WSPongTimeout           time.Duration `mapstructure:"WS_PONG_TIMEOUT"`
+
 	// File storage configuration
 	FileStoragePath         string `mapstructure:"FILE_STORAGE_PATH"`
 	FileMaxSize             int64  `mapstructure:"FILE_MAX_SIZE"`
 	FileAllowedTypes        string `mapstructure:"FILE_ALLOWED_TYPES"`
 	EnableFileDeduplication bool   `mapstructure:"ENABLE_FILE_DEDUPLICATION"`
 	EnableThumbnails        bool   `mapstructure:"ENABLE_THUMBNAILS"`
+
 	// AWS S3 configuration (optional)
 	AWSS3Bucket  string `mapstructure:"AWS_S3_BUCKET"`
 	AWSRegion    string `mapstructure:"AWS_REGION"`

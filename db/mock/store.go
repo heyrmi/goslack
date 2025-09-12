@@ -97,6 +97,20 @@ func (mr *MockStoreMockRecorder) AddUserToWorkspace(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToWorkspace", reflect.TypeOf((*MockStore)(nil).AddUserToWorkspace), arg0, arg1)
 }
 
+// CancelScheduledMessage mocks base method.
+func (m *MockStore) CancelScheduledMessage(arg0 context.Context, arg1 db.CancelScheduledMessageParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelScheduledMessage", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelScheduledMessage indicates an expected call of CancelScheduledMessage.
+func (mr *MockStoreMockRecorder) CancelScheduledMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelScheduledMessage", reflect.TypeOf((*MockStore)(nil).CancelScheduledMessage), arg0, arg1)
+}
+
 // CheckChannelMembership mocks base method.
 func (m *MockStore) CheckChannelMembership(arg0 context.Context, arg1 db.CheckChannelMembershipParams) (string, error) {
 	m.ctrl.T.Helper()
@@ -198,6 +212,20 @@ func (m *MockStore) CleanupOldDrafts(arg0 context.Context, arg1 time.Time) error
 func (mr *MockStoreMockRecorder) CleanupOldDrafts(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupOldDrafts", reflect.TypeOf((*MockStore)(nil).CleanupOldDrafts), arg0, arg1)
+}
+
+// CleanupOldScheduledMessages mocks base method.
+func (m *MockStore) CleanupOldScheduledMessages(arg0 context.Context, arg1 time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CleanupOldScheduledMessages", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CleanupOldScheduledMessages indicates an expected call of CleanupOldScheduledMessages.
+func (mr *MockStoreMockRecorder) CleanupOldScheduledMessages(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupOldScheduledMessages", reflect.TypeOf((*MockStore)(nil).CleanupOldScheduledMessages), arg0, arg1)
 }
 
 // CleanupOldSecurityEvents mocks base method.
@@ -363,6 +391,21 @@ func (mr *MockStoreMockRecorder) CreateMessageMention(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMessageMention", reflect.TypeOf((*MockStore)(nil).CreateMessageMention), arg0, arg1)
 }
 
+// CreateNotificationPreference mocks base method.
+func (m *MockStore) CreateNotificationPreference(arg0 context.Context, arg1 db.CreateNotificationPreferenceParams) (db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateNotificationPreference indicates an expected call of CreateNotificationPreference.
+func (mr *MockStoreMockRecorder) CreateNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNotificationPreference", reflect.TypeOf((*MockStore)(nil).CreateNotificationPreference), arg0, arg1)
+}
+
 // CreateOrganization mocks base method.
 func (m *MockStore) CreateOrganization(arg0 context.Context, arg1 string) (db.Organization, error) {
 	m.ctrl.T.Helper()
@@ -391,6 +434,21 @@ func (m *MockStore) CreatePasswordResetToken(arg0 context.Context, arg1 db.Creat
 func (mr *MockStoreMockRecorder) CreatePasswordResetToken(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePasswordResetToken", reflect.TypeOf((*MockStore)(nil).CreatePasswordResetToken), arg0, arg1)
+}
+
+// CreateScheduledMessage mocks base method.
+func (m *MockStore) CreateScheduledMessage(arg0 context.Context, arg1 db.CreateScheduledMessageParams) (db.ScheduledMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateScheduledMessage", arg0, arg1)
+	ret0, _ := ret[0].(db.ScheduledMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateScheduledMessage indicates an expected call of CreateScheduledMessage.
+func (mr *MockStoreMockRecorder) CreateScheduledMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateScheduledMessage", reflect.TypeOf((*MockStore)(nil).CreateScheduledMessage), arg0, arg1)
 }
 
 // CreateSecurityEvent mocks base method.
@@ -639,6 +697,20 @@ func (mr *MockStoreMockRecorder) DeleteMessageFile(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMessageFile", reflect.TypeOf((*MockStore)(nil).DeleteMessageFile), arg0, arg1)
 }
 
+// DeleteNotificationPreference mocks base method.
+func (m *MockStore) DeleteNotificationPreference(arg0 context.Context, arg1 db.DeleteNotificationPreferenceParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteNotificationPreference indicates an expected call of DeleteNotificationPreference.
+func (mr *MockStoreMockRecorder) DeleteNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteNotificationPreference", reflect.TypeOf((*MockStore)(nil).DeleteNotificationPreference), arg0, arg1)
+}
+
 // DeleteOrganization mocks base method.
 func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 int64) error {
 	m.ctrl.T.Helper()
@@ -651,6 +723,20 @@ func (m *MockStore) DeleteOrganization(arg0 context.Context, arg1 int64) error {
 func (mr *MockStoreMockRecorder) DeleteOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOrganization", reflect.TypeOf((*MockStore)(nil).DeleteOrganization), arg0, arg1)
+}
+
+// DeleteScheduledMessage mocks base method.
+func (m *MockStore) DeleteScheduledMessage(arg0 context.Context, arg1 db.DeleteScheduledMessageParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteScheduledMessage", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteScheduledMessage indicates an expected call of DeleteScheduledMessage.
+func (mr *MockStoreMockRecorder) DeleteScheduledMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteScheduledMessage", reflect.TypeOf((*MockStore)(nil).DeleteScheduledMessage), arg0, arg1)
 }
 
 // DeleteUser mocks base method.
@@ -679,6 +765,20 @@ func (m *MockStore) DeleteUser2FA(arg0 context.Context, arg1 int64) error {
 func (mr *MockStoreMockRecorder) DeleteUser2FA(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser2FA", reflect.TypeOf((*MockStore)(nil).DeleteUser2FA), arg0, arg1)
+}
+
+// DeleteUserNotificationPreferences mocks base method.
+func (m *MockStore) DeleteUserNotificationPreferences(arg0 context.Context, arg1 int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUserNotificationPreferences", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteUserNotificationPreferences indicates an expected call of DeleteUserNotificationPreferences.
+func (mr *MockStoreMockRecorder) DeleteUserNotificationPreferences(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUserNotificationPreferences", reflect.TypeOf((*MockStore)(nil).DeleteUserNotificationPreferences), arg0, arg1)
 }
 
 // DeleteUserPasswordResetTokens mocks base method.
@@ -1020,6 +1120,21 @@ func (mr *MockStoreMockRecorder) GetFileWithPermissionCheck(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileWithPermissionCheck", reflect.TypeOf((*MockStore)(nil).GetFileWithPermissionCheck), arg0, arg1)
 }
 
+// GetGlobalNotificationPreference mocks base method.
+func (m *MockStore) GetGlobalNotificationPreference(arg0 context.Context, arg1 db.GetGlobalNotificationPreferenceParams) (db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGlobalNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetGlobalNotificationPreference indicates an expected call of GetGlobalNotificationPreference.
+func (mr *MockStoreMockRecorder) GetGlobalNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGlobalNotificationPreference", reflect.TypeOf((*MockStore)(nil).GetGlobalNotificationPreference), arg0, arg1)
+}
+
 // GetMessageByID mocks base method.
 func (m *MockStore) GetMessageByID(arg0 context.Context, arg1 int64) (db.GetMessageByIDRow, error) {
 	m.ctrl.T.Helper()
@@ -1110,6 +1225,21 @@ func (mr *MockStoreMockRecorder) GetMessageReactions(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageReactions", reflect.TypeOf((*MockStore)(nil).GetMessageReactions), arg0, arg1)
 }
 
+// GetNotificationPreference mocks base method.
+func (m *MockStore) GetNotificationPreference(arg0 context.Context, arg1 db.GetNotificationPreferenceParams) (db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetNotificationPreference indicates an expected call of GetNotificationPreference.
+func (mr *MockStoreMockRecorder) GetNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNotificationPreference", reflect.TypeOf((*MockStore)(nil).GetNotificationPreference), arg0, arg1)
+}
+
 // GetOnlineUsersInWorkspace mocks base method.
 func (m *MockStore) GetOnlineUsersInWorkspace(arg0 context.Context, arg1 int64) ([]db.GetOnlineUsersInWorkspaceRow, error) {
 	m.ctrl.T.Helper()
@@ -1170,6 +1300,21 @@ func (mr *MockStoreMockRecorder) GetPendingInvitationsForUser(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingInvitationsForUser", reflect.TypeOf((*MockStore)(nil).GetPendingInvitationsForUser), arg0, arg1)
 }
 
+// GetPendingScheduledMessages mocks base method.
+func (m *MockStore) GetPendingScheduledMessages(arg0 context.Context, arg1 int32) ([]db.ScheduledMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingScheduledMessages", arg0, arg1)
+	ret0, _ := ret[0].([]db.ScheduledMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingScheduledMessages indicates an expected call of GetPendingScheduledMessages.
+func (mr *MockStoreMockRecorder) GetPendingScheduledMessages(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingScheduledMessages", reflect.TypeOf((*MockStore)(nil).GetPendingScheduledMessages), arg0, arg1)
+}
+
 // GetPinnedMessages mocks base method.
 func (m *MockStore) GetPinnedMessages(arg0 context.Context, arg1 int64) ([]db.GetPinnedMessagesRow, error) {
 	m.ctrl.T.Helper()
@@ -1213,6 +1358,36 @@ func (m *MockStore) GetRecentWorkspaceMessages(arg0 context.Context, arg1 db.Get
 func (mr *MockStoreMockRecorder) GetRecentWorkspaceMessages(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRecentWorkspaceMessages", reflect.TypeOf((*MockStore)(nil).GetRecentWorkspaceMessages), arg0, arg1)
+}
+
+// GetScheduledMessage mocks base method.
+func (m *MockStore) GetScheduledMessage(arg0 context.Context, arg1 db.GetScheduledMessageParams) (db.ScheduledMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetScheduledMessage", arg0, arg1)
+	ret0, _ := ret[0].(db.ScheduledMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledMessage indicates an expected call of GetScheduledMessage.
+func (mr *MockStoreMockRecorder) GetScheduledMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledMessage", reflect.TypeOf((*MockStore)(nil).GetScheduledMessage), arg0, arg1)
+}
+
+// GetScheduledMessagesStats mocks base method.
+func (m *MockStore) GetScheduledMessagesStats(arg0 context.Context, arg1 db.GetScheduledMessagesStatsParams) (db.GetScheduledMessagesStatsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetScheduledMessagesStats", arg0, arg1)
+	ret0, _ := ret[0].(db.GetScheduledMessagesStatsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetScheduledMessagesStats indicates an expected call of GetScheduledMessagesStats.
+func (mr *MockStoreMockRecorder) GetScheduledMessagesStats(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetScheduledMessagesStats", reflect.TypeOf((*MockStore)(nil).GetScheduledMessagesStats), arg0, arg1)
 }
 
 // GetSecurityEventsByType mocks base method.
@@ -1425,6 +1600,21 @@ func (mr *MockStoreMockRecorder) GetUserMentions(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserMentions", reflect.TypeOf((*MockStore)(nil).GetUserMentions), arg0, arg1)
 }
 
+// GetUserNotificationPreferences mocks base method.
+func (m *MockStore) GetUserNotificationPreferences(arg0 context.Context, arg1 db.GetUserNotificationPreferencesParams) ([]db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserNotificationPreferences", arg0, arg1)
+	ret0, _ := ret[0].([]db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserNotificationPreferences indicates an expected call of GetUserNotificationPreferences.
+func (mr *MockStoreMockRecorder) GetUserNotificationPreferences(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserNotificationPreferences", reflect.TypeOf((*MockStore)(nil).GetUserNotificationPreferences), arg0, arg1)
+}
+
 // GetUserReactionsForMessage mocks base method.
 func (m *MockStore) GetUserReactionsForMessage(arg0 context.Context, arg1 db.GetUserReactionsForMessageParams) ([]string, error) {
 	m.ctrl.T.Helper()
@@ -1438,6 +1628,21 @@ func (m *MockStore) GetUserReactionsForMessage(arg0 context.Context, arg1 db.Get
 func (mr *MockStoreMockRecorder) GetUserReactionsForMessage(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserReactionsForMessage", reflect.TypeOf((*MockStore)(nil).GetUserReactionsForMessage), arg0, arg1)
+}
+
+// GetUserScheduledMessages mocks base method.
+func (m *MockStore) GetUserScheduledMessages(arg0 context.Context, arg1 db.GetUserScheduledMessagesParams) ([]db.GetUserScheduledMessagesRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserScheduledMessages", arg0, arg1)
+	ret0, _ := ret[0].([]db.GetUserScheduledMessagesRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserScheduledMessages indicates an expected call of GetUserScheduledMessages.
+func (mr *MockStoreMockRecorder) GetUserScheduledMessages(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserScheduledMessages", reflect.TypeOf((*MockStore)(nil).GetUserScheduledMessages), arg0, arg1)
 }
 
 // GetUserSecurityEvents mocks base method.
@@ -1695,6 +1900,21 @@ func (mr *MockStoreMockRecorder) IsChannelMember(arg0, arg1 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelMember", reflect.TypeOf((*MockStore)(nil).IsChannelMember), arg0, arg1)
 }
 
+// IsInDoNotDisturbMode mocks base method.
+func (m *MockStore) IsInDoNotDisturbMode(arg0 context.Context, arg1 db.IsInDoNotDisturbModeParams) (interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsInDoNotDisturbMode", arg0, arg1)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsInDoNotDisturbMode indicates an expected call of IsInDoNotDisturbMode.
+func (mr *MockStoreMockRecorder) IsInDoNotDisturbMode(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsInDoNotDisturbMode", reflect.TypeOf((*MockStore)(nil).IsInDoNotDisturbMode), arg0, arg1)
+}
+
 // IsMessagePinned mocks base method.
 func (m *MockStore) IsMessagePinned(arg0 context.Context, arg1 int64) (bool, error) {
 	m.ctrl.T.Helper()
@@ -1885,6 +2105,20 @@ func (m *MockStore) MarkDirectMessagesAsRead(arg0 context.Context, arg1 db.MarkD
 func (mr *MockStoreMockRecorder) MarkDirectMessagesAsRead(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkDirectMessagesAsRead", reflect.TypeOf((*MockStore)(nil).MarkDirectMessagesAsRead), arg0, arg1)
+}
+
+// MarkScheduledMessageAsSent mocks base method.
+func (m *MockStore) MarkScheduledMessageAsSent(arg0 context.Context, arg1 int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkScheduledMessageAsSent", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkScheduledMessageAsSent indicates an expected call of MarkScheduledMessageAsSent.
+func (mr *MockStoreMockRecorder) MarkScheduledMessageAsSent(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkScheduledMessageAsSent", reflect.TypeOf((*MockStore)(nil).MarkScheduledMessageAsSent), arg0, arg1)
 }
 
 // PinMessage mocks base method.
@@ -2160,6 +2394,21 @@ func (mr *MockStoreMockRecorder) UpdateMessageContent(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMessageContent", reflect.TypeOf((*MockStore)(nil).UpdateMessageContent), arg0, arg1)
 }
 
+// UpdateNotificationPreference mocks base method.
+func (m *MockStore) UpdateNotificationPreference(arg0 context.Context, arg1 db.UpdateNotificationPreferenceParams) (db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateNotificationPreference indicates an expected call of UpdateNotificationPreference.
+func (mr *MockStoreMockRecorder) UpdateNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateNotificationPreference", reflect.TypeOf((*MockStore)(nil).UpdateNotificationPreference), arg0, arg1)
+}
+
 // UpdateOrganization mocks base method.
 func (m *MockStore) UpdateOrganization(arg0 context.Context, arg1 db.UpdateOrganizationParams) (db.Organization, error) {
 	m.ctrl.T.Helper()
@@ -2173,6 +2422,21 @@ func (m *MockStore) UpdateOrganization(arg0 context.Context, arg1 db.UpdateOrgan
 func (mr *MockStoreMockRecorder) UpdateOrganization(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOrganization", reflect.TypeOf((*MockStore)(nil).UpdateOrganization), arg0, arg1)
+}
+
+// UpdateScheduledMessage mocks base method.
+func (m *MockStore) UpdateScheduledMessage(arg0 context.Context, arg1 db.UpdateScheduledMessageParams) (db.ScheduledMessage, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateScheduledMessage", arg0, arg1)
+	ret0, _ := ret[0].(db.ScheduledMessage)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateScheduledMessage indicates an expected call of UpdateScheduledMessage.
+func (mr *MockStoreMockRecorder) UpdateScheduledMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateScheduledMessage", reflect.TypeOf((*MockStore)(nil).UpdateScheduledMessage), arg0, arg1)
 }
 
 // UpdateSessionLastUsed mocks base method.
@@ -2305,6 +2569,21 @@ func (m *MockStore) UpdateWorkspaceMemberRole(arg0 context.Context, arg1 db.Upda
 func (mr *MockStoreMockRecorder) UpdateWorkspaceMemberRole(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkspaceMemberRole", reflect.TypeOf((*MockStore)(nil).UpdateWorkspaceMemberRole), arg0, arg1)
+}
+
+// UpsertNotificationPreference mocks base method.
+func (m *MockStore) UpsertNotificationPreference(arg0 context.Context, arg1 db.UpsertNotificationPreferenceParams) (db.NotificationPreference, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertNotificationPreference", arg0, arg1)
+	ret0, _ := ret[0].(db.NotificationPreference)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertNotificationPreference indicates an expected call of UpsertNotificationPreference.
+func (mr *MockStoreMockRecorder) UpsertNotificationPreference(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertNotificationPreference", reflect.TypeOf((*MockStore)(nil).UpsertNotificationPreference), arg0, arg1)
 }
 
 // UpsertUserStatus mocks base method.

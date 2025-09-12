@@ -36,6 +36,26 @@ sqlc:
 test:
 	go test -v -cover -count=1 ./...
 
+test-unit:
+	go test -v -cover -count=1 -short ./...
+
+test-integration:
+	go test -v -cover -count=1 -run TestIntegrationSuite ./...
+
+test-coverage:
+	go test -v -cover -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out -o coverage.html
+	go tool cover -func=coverage.out
+
+test-db:
+	go test -v -cover -count=1 ./db/sqlc/...
+
+test-api:
+	go test -v -cover -count=1 ./api/...
+
+test-service:
+	go test -v -cover -count=1 ./service/...
+
 server:
 	go run main.go
 

@@ -58,6 +58,21 @@ func createRandomUserForOrganization(t *testing.T, organizationID int64) User {
 	return user
 }
 
+// createRandomUserForWorkspace creates a user and assigns them to a workspace
+func createRandomUserForWorkspace(t *testing.T, workspace Workspace) User {
+	user := createRandomUserForOrganization(t, workspace.OrganizationID)
+
+	// Assign user to workspace
+	updatedUser, err := testQueries.UpdateUserWorkspace(context.Background(), UpdateUserWorkspaceParams{
+		ID:          user.ID,
+		WorkspaceID: sql.NullInt64{Int64: workspace.ID, Valid: true},
+		Role:        "member",
+	})
+	require.NoError(t, err)
+
+	return updatedUser
+}
+
 func TestCreateUser(t *testing.T) {
 	createRandomUser(t)
 }
