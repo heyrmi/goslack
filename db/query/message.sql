@@ -98,3 +98,42 @@ OFFSET $3;
 -- name: CheckMessageAuthor :one
 SELECT sender_id FROM messages
 WHERE id = $1 AND deleted_at IS NULL;
+
+-- name: CreateThreadReply :one
+INSERT INTO messages (
+    workspace_id,
+    channel_id,
+    sender_id,
+    receiver_id,
+    content,
+    content_type,
+    message_type,
+    thread_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING *;
+
+-- name: GetThreadMessages :many
+SELECT m.*, u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE (m.id = $1 OR m.thread_id = $1) 
+  AND m.deleted_at IS NULL
+ORDER BY m.created_at ASC;
+
+-- name: GetThreadReplies :many
+SELECT m.*, u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE m.thread_id = $1 
+  AND m.deleted_at IS NULL
+ORDER BY m.created_at ASC
+LIMIT $2 OFFSET $3;
+
+-- name: GetThreadInfo :one
+SELECT m.id, m.content, m.created_at, m.reply_count, m.last_reply_at,
+       u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE m.id = $1 AND m.deleted_at IS NULL;

@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"strings"
 	"time"
 )
@@ -67,4 +68,19 @@ func RandomBool() bool {
 // IntToString converts an int64 to string
 func IntToString(i int64) string {
 	return fmt.Sprintf("%d", i)
+}
+
+// RandomIPNet generates a random IP network for testing
+func RandomIPNet() net.IPNet {
+	// Generate a random IP address
+	ip := net.IPv4(
+		byte(rand.Intn(256)),
+		byte(rand.Intn(256)),
+		byte(rand.Intn(256)),
+		byte(rand.Intn(256)),
+	)
+
+	// Create a /24 network
+	_, network, _ := net.ParseCIDR(fmt.Sprintf("%s/24", ip.String()))
+	return *network
 }

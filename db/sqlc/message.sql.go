@@ -34,7 +34,7 @@ INSERT INTO messages (
 ) VALUES (
     $1, $2, $3, $4, $5, 'channel'
 )
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type, reply_count, last_reply_at
 `
 
 type CreateChannelMessageParams struct {
@@ -67,6 +67,8 @@ func (q *Queries) CreateChannelMessage(ctx context.Context, arg CreateChannelMes
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.ContentType,
+		&i.ReplyCount,
+		&i.LastReplyAt,
 	)
 	return i, err
 }
@@ -82,7 +84,7 @@ INSERT INTO messages (
 ) VALUES (
     $1, $2, $3, $4, $5, 'direct'
 )
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type, reply_count, last_reply_at
 `
 
 type CreateDirectMessageParams struct {
@@ -115,13 +117,73 @@ func (q *Queries) CreateDirectMessage(ctx context.Context, arg CreateDirectMessa
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.ContentType,
+		&i.ReplyCount,
+		&i.LastReplyAt,
+	)
+	return i, err
+}
+
+const createThreadReply = `-- name: CreateThreadReply :one
+INSERT INTO messages (
+    workspace_id,
+    channel_id,
+    sender_id,
+    receiver_id,
+    content,
+    content_type,
+    message_type,
+    thread_id
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+)
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type, reply_count, last_reply_at
+`
+
+type CreateThreadReplyParams struct {
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	SenderID    int64         `json:"sender_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	Content     string        `json:"content"`
+	ContentType string        `json:"content_type"`
+	MessageType string        `json:"message_type"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+}
+
+func (q *Queries) CreateThreadReply(ctx context.Context, arg CreateThreadReplyParams) (Message, error) {
+	row := q.db.QueryRowContext(ctx, createThreadReply,
+		arg.WorkspaceID,
+		arg.ChannelID,
+		arg.SenderID,
+		arg.ReceiverID,
+		arg.Content,
+		arg.ContentType,
+		arg.MessageType,
+		arg.ThreadID,
+	)
+	var i Message
+	err := row.Scan(
+		&i.ID,
+		&i.WorkspaceID,
+		&i.ChannelID,
+		&i.SenderID,
+		&i.ReceiverID,
+		&i.Content,
+		&i.MessageType,
+		&i.ThreadID,
+		&i.EditedAt,
+		&i.DeletedAt,
+		&i.CreatedAt,
+		&i.ContentType,
+		&i.ReplyCount,
+		&i.LastReplyAt,
 	)
 	return i, err
 }
 
 const getChannelMessages = `-- name: GetChannelMessages :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -155,6 +217,8 @@ type GetChannelMessagesRow struct {
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
 	ContentType     string        `json:"content_type"`
+	ReplyCount      int32         `json:"reply_count"`
+	LastReplyAt     sql.NullTime  `json:"last_reply_at"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -187,6 +251,8 @@ func (q *Queries) GetChannelMessages(ctx context.Context, arg GetChannelMessages
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
@@ -206,7 +272,7 @@ func (q *Queries) GetChannelMessages(ctx context.Context, arg GetChannelMessages
 
 const getDirectMessagesBetweenUsers = `-- name: GetDirectMessagesBetweenUsers :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -245,6 +311,8 @@ type GetDirectMessagesBetweenUsersRow struct {
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
 	ContentType     string        `json:"content_type"`
+	ReplyCount      int32         `json:"reply_count"`
+	LastReplyAt     sql.NullTime  `json:"last_reply_at"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -278,6 +346,8 @@ func (q *Queries) GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDire
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
@@ -297,7 +367,7 @@ func (q *Queries) GetDirectMessagesBetweenUsers(ctx context.Context, arg GetDire
 
 const getMessageByID = `-- name: GetMessageByID :one
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -319,6 +389,8 @@ type GetMessageByIDRow struct {
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
 	ContentType     string        `json:"content_type"`
+	ReplyCount      int32         `json:"reply_count"`
+	LastReplyAt     sql.NullTime  `json:"last_reply_at"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -340,6 +412,8 @@ func (q *Queries) GetMessageByID(ctx context.Context, id int64) (GetMessageByIDR
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.ContentType,
+		&i.ReplyCount,
+		&i.LastReplyAt,
 		&i.SenderFirstName,
 		&i.SenderLastName,
 		&i.SenderEmail,
@@ -349,7 +423,7 @@ func (q *Queries) GetMessageByID(ctx context.Context, id int64) (GetMessageByIDR
 
 const getRecentWorkspaceMessages = `-- name: GetRecentWorkspaceMessages :many
 SELECT 
-    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type,
+    m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at,
     u.first_name as sender_first_name,
     u.last_name as sender_last_name,
     u.email as sender_email
@@ -381,6 +455,8 @@ type GetRecentWorkspaceMessagesRow struct {
 	DeletedAt       sql.NullTime  `json:"deleted_at"`
 	CreatedAt       time.Time     `json:"created_at"`
 	ContentType     string        `json:"content_type"`
+	ReplyCount      int32         `json:"reply_count"`
+	LastReplyAt     sql.NullTime  `json:"last_reply_at"`
 	SenderFirstName string        `json:"sender_first_name"`
 	SenderLastName  string        `json:"sender_last_name"`
 	SenderEmail     string        `json:"sender_email"`
@@ -408,9 +484,187 @@ func (q *Queries) GetRecentWorkspaceMessages(ctx context.Context, arg GetRecentW
 			&i.DeletedAt,
 			&i.CreatedAt,
 			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
 			&i.SenderFirstName,
 			&i.SenderLastName,
 			&i.SenderEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getThreadInfo = `-- name: GetThreadInfo :one
+SELECT m.id, m.content, m.created_at, m.reply_count, m.last_reply_at,
+       u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE m.id = $1 AND m.deleted_at IS NULL
+`
+
+type GetThreadInfoRow struct {
+	ID          int64        `json:"id"`
+	Content     string       `json:"content"`
+	CreatedAt   time.Time    `json:"created_at"`
+	ReplyCount  int32        `json:"reply_count"`
+	LastReplyAt sql.NullTime `json:"last_reply_at"`
+	FirstName   string       `json:"first_name"`
+	LastName    string       `json:"last_name"`
+}
+
+func (q *Queries) GetThreadInfo(ctx context.Context, id int64) (GetThreadInfoRow, error) {
+	row := q.db.QueryRowContext(ctx, getThreadInfo, id)
+	var i GetThreadInfoRow
+	err := row.Scan(
+		&i.ID,
+		&i.Content,
+		&i.CreatedAt,
+		&i.ReplyCount,
+		&i.LastReplyAt,
+		&i.FirstName,
+		&i.LastName,
+	)
+	return i, err
+}
+
+const getThreadMessages = `-- name: GetThreadMessages :many
+SELECT m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at, u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE (m.id = $1 OR m.thread_id = $1) 
+  AND m.deleted_at IS NULL
+ORDER BY m.created_at ASC
+`
+
+type GetThreadMessagesRow struct {
+	ID          int64         `json:"id"`
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	SenderID    int64         `json:"sender_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	Content     string        `json:"content"`
+	MessageType string        `json:"message_type"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+	EditedAt    sql.NullTime  `json:"edited_at"`
+	DeletedAt   sql.NullTime  `json:"deleted_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+	ContentType string        `json:"content_type"`
+	ReplyCount  int32         `json:"reply_count"`
+	LastReplyAt sql.NullTime  `json:"last_reply_at"`
+	FirstName   string        `json:"first_name"`
+	LastName    string        `json:"last_name"`
+}
+
+func (q *Queries) GetThreadMessages(ctx context.Context, id int64) ([]GetThreadMessagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getThreadMessages, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetThreadMessagesRow{}
+	for rows.Next() {
+		var i GetThreadMessagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.ChannelID,
+			&i.SenderID,
+			&i.ReceiverID,
+			&i.Content,
+			&i.MessageType,
+			&i.ThreadID,
+			&i.EditedAt,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
+			&i.FirstName,
+			&i.LastName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getThreadReplies = `-- name: GetThreadReplies :many
+SELECT m.id, m.workspace_id, m.channel_id, m.sender_id, m.receiver_id, m.content, m.message_type, m.thread_id, m.edited_at, m.deleted_at, m.created_at, m.content_type, m.reply_count, m.last_reply_at, u.first_name, u.last_name
+FROM messages m
+JOIN users u ON m.sender_id = u.id
+WHERE m.thread_id = $1 
+  AND m.deleted_at IS NULL
+ORDER BY m.created_at ASC
+LIMIT $2 OFFSET $3
+`
+
+type GetThreadRepliesParams struct {
+	ThreadID sql.NullInt64 `json:"thread_id"`
+	Limit    int32         `json:"limit"`
+	Offset   int32         `json:"offset"`
+}
+
+type GetThreadRepliesRow struct {
+	ID          int64         `json:"id"`
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	SenderID    int64         `json:"sender_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	Content     string        `json:"content"`
+	MessageType string        `json:"message_type"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+	EditedAt    sql.NullTime  `json:"edited_at"`
+	DeletedAt   sql.NullTime  `json:"deleted_at"`
+	CreatedAt   time.Time     `json:"created_at"`
+	ContentType string        `json:"content_type"`
+	ReplyCount  int32         `json:"reply_count"`
+	LastReplyAt sql.NullTime  `json:"last_reply_at"`
+	FirstName   string        `json:"first_name"`
+	LastName    string        `json:"last_name"`
+}
+
+func (q *Queries) GetThreadReplies(ctx context.Context, arg GetThreadRepliesParams) ([]GetThreadRepliesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getThreadReplies, arg.ThreadID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetThreadRepliesRow{}
+	for rows.Next() {
+		var i GetThreadRepliesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.WorkspaceID,
+			&i.ChannelID,
+			&i.SenderID,
+			&i.ReceiverID,
+			&i.Content,
+			&i.MessageType,
+			&i.ThreadID,
+			&i.EditedAt,
+			&i.DeletedAt,
+			&i.CreatedAt,
+			&i.ContentType,
+			&i.ReplyCount,
+			&i.LastReplyAt,
+			&i.FirstName,
+			&i.LastName,
 		); err != nil {
 			return nil, err
 		}
@@ -442,7 +696,7 @@ SET
     content = $2,
     edited_at = now()
 WHERE id = $1 AND deleted_at IS NULL
-RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type
+RETURNING id, workspace_id, channel_id, sender_id, receiver_id, content, message_type, thread_id, edited_at, deleted_at, created_at, content_type, reply_count, last_reply_at
 `
 
 type UpdateMessageContentParams struct {
@@ -466,6 +720,8 @@ func (q *Queries) UpdateMessageContent(ctx context.Context, arg UpdateMessageCon
 		&i.DeletedAt,
 		&i.CreatedAt,
 		&i.ContentType,
+		&i.ReplyCount,
+		&i.LastReplyAt,
 	)
 	return i, err
 }

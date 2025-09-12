@@ -329,12 +329,3 @@ func (server *Server) getMessage(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, message)
 }
-
-// Helper function to get current user from context
-func getCurrentUser(ctx *gin.Context) service.UserResponse {
-	currentUser, exists := ctx.Get(currentUserKey)
-	if !exists {
-		panic("user not found in context")
-	}
-	return currentUser.(service.UserResponse)
-}

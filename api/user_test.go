@@ -159,6 +159,18 @@ func TestLoginUserAPI(t *testing.T) {
 					GetUserByEmail(gomock.Any(), gomock.Eq(user.Email)).
 					Times(1).
 					Return(user, nil)
+				store.EXPECT().
+					IsAccountLocked(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(sql.NullBool{Bool: false, Valid: true}, nil)
+				store.EXPECT().
+					ResetFailedAttempts(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(nil)
+				store.EXPECT().
+					CreateSecurityEvent(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.SecurityEvent{}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, recorder.Code)
@@ -191,6 +203,22 @@ func TestLoginUserAPI(t *testing.T) {
 					GetUserByEmail(gomock.Any(), gomock.Eq(user.Email)).
 					Times(1).
 					Return(user, nil)
+				store.EXPECT().
+					IsAccountLocked(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(sql.NullBool{Bool: false, Valid: true}, nil)
+				store.EXPECT().
+					GetAccountLockout(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(db.AccountLockout{}, sql.ErrNoRows)
+				store.EXPECT().
+					CreateAccountLockout(gomock.Any(), gomock.Eq(user.ID)).
+					Times(1).
+					Return(db.AccountLockout{}, nil)
+				store.EXPECT().
+					CreateSecurityEvent(gomock.Any(), gomock.Any()).
+					Times(1).
+					Return(db.SecurityEvent{}, nil)
 			},
 			checkResponse: func(recorder *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -353,6 +381,7 @@ func randomUser(t *testing.T) (user db.User, password string) {
 		HashedPassword:    hashedPassword,
 		PasswordChangedAt: time.Now(),
 		CreatedAt:         time.Now(),
+		EmailVerified:     true, // Set to true so login tests pass
 	}
 	return
 }

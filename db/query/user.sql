@@ -70,3 +70,13 @@ OFFSET $3;
 SELECT role FROM users
 WHERE id = $1 AND workspace_id = $2
 LIMIT 1;
+
+-- name: VerifyUserEmail :exec
+UPDATE users 
+SET email_verified = true, email_verified_at = now()
+WHERE id = $1;
+
+-- name: UpdateUserEmail :exec
+UPDATE users 
+SET email = $2, email_verified = false, email_verified_at = NULL
+WHERE id = $1;

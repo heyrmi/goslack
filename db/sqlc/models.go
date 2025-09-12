@@ -7,7 +7,19 @@ package db
 import (
 	"database/sql"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
+
+type AccountLockout struct {
+	ID                int64        `json:"id"`
+	UserID            int64        `json:"user_id"`
+	FailedAttempts    int32        `json:"failed_attempts"`
+	LockedUntil       sql.NullTime `json:"locked_until"`
+	LastFailedAttempt sql.NullTime `json:"last_failed_attempt"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         time.Time    `json:"updated_at"`
+}
 
 type Channel struct {
 	ID          int64     `json:"id"`
@@ -25,6 +37,19 @@ type ChannelMember struct {
 	AddedBy   int64     `json:"added_by"`
 	Role      string    `json:"role"`
 	JoinedAt  time.Time `json:"joined_at"`
+}
+
+type EmailVerificationToken struct {
+	ID        int64          `json:"id"`
+	UserID    int64          `json:"user_id"`
+	Token     string         `json:"token"`
+	Email     string         `json:"email"`
+	TokenType string         `json:"token_type"`
+	ExpiresAt time.Time      `json:"expires_at"`
+	UsedAt    sql.NullTime   `json:"used_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	IpAddress pqtype.Inet    `json:"ip_address"`
+	UserAgent sql.NullString `json:"user_agent"`
 }
 
 type File struct {
@@ -68,6 +93,20 @@ type Message struct {
 	DeletedAt   sql.NullTime  `json:"deleted_at"`
 	CreatedAt   time.Time     `json:"created_at"`
 	ContentType string        `json:"content_type"`
+	ReplyCount  int32         `json:"reply_count"`
+	LastReplyAt sql.NullTime  `json:"last_reply_at"`
+}
+
+type MessageDraft struct {
+	ID          int64         `json:"id"`
+	UserID      int64         `json:"user_id"`
+	WorkspaceID int64         `json:"workspace_id"`
+	ChannelID   sql.NullInt64 `json:"channel_id"`
+	ReceiverID  sql.NullInt64 `json:"receiver_id"`
+	ThreadID    sql.NullInt64 `json:"thread_id"`
+	Content     string        `json:"content"`
+	CreatedAt   time.Time     `json:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at"`
 }
 
 type MessageFile struct {
@@ -77,10 +116,108 @@ type MessageFile struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+type MessageMention struct {
+	ID              int64         `json:"id"`
+	MessageID       int64         `json:"message_id"`
+	MentionedUserID sql.NullInt64 `json:"mentioned_user_id"`
+	MentionType     string        `json:"mention_type"`
+	CreatedAt       time.Time     `json:"created_at"`
+}
+
+type MessageReaction struct {
+	ID        int64     `json:"id"`
+	MessageID int64     `json:"message_id"`
+	UserID    int64     `json:"user_id"`
+	Emoji     string    `json:"emoji"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type MessageSearchIndex struct {
+	MessageID     int64         `json:"message_id"`
+	WorkspaceID   int64         `json:"workspace_id"`
+	ChannelID     sql.NullInt64 `json:"channel_id"`
+	UserID        int64         `json:"user_id"`
+	ContentVector interface{}   `json:"content_vector"`
+	CreatedAt     time.Time     `json:"created_at"`
+}
+
+type NotificationPreference struct {
+	ID                   int64          `json:"id"`
+	UserID               int64          `json:"user_id"`
+	WorkspaceID          int64          `json:"workspace_id"`
+	ChannelID            sql.NullInt64  `json:"channel_id"`
+	NotificationType     string         `json:"notification_type"`
+	EmailNotifications   bool           `json:"email_notifications"`
+	PushNotifications    bool           `json:"push_notifications"`
+	DesktopNotifications bool           `json:"desktop_notifications"`
+	Keywords             []string       `json:"keywords"`
+	DoNotDisturbStart    sql.NullTime   `json:"do_not_disturb_start"`
+	DoNotDisturbEnd      sql.NullTime   `json:"do_not_disturb_end"`
+	Timezone             sql.NullString `json:"timezone"`
+	CreatedAt            time.Time      `json:"created_at"`
+	UpdatedAt            time.Time      `json:"updated_at"`
+}
+
 type Organization struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+type PasswordResetToken struct {
+	ID        int64          `json:"id"`
+	UserID    int64          `json:"user_id"`
+	Token     string         `json:"token"`
+	ExpiresAt time.Time      `json:"expires_at"`
+	UsedAt    sql.NullTime   `json:"used_at"`
+	CreatedAt time.Time      `json:"created_at"`
+	IpAddress pqtype.Inet    `json:"ip_address"`
+	UserAgent sql.NullString `json:"user_agent"`
+}
+
+type PinnedMessage struct {
+	ID        int64     `json:"id"`
+	MessageID int64     `json:"message_id"`
+	ChannelID int64     `json:"channel_id"`
+	PinnedBy  int64     `json:"pinned_by"`
+	PinnedAt  time.Time `json:"pinned_at"`
+}
+
+type ScheduledMessage struct {
+	ID           int64         `json:"id"`
+	UserID       int64         `json:"user_id"`
+	WorkspaceID  int64         `json:"workspace_id"`
+	ChannelID    sql.NullInt64 `json:"channel_id"`
+	ReceiverID   sql.NullInt64 `json:"receiver_id"`
+	ThreadID     sql.NullInt64 `json:"thread_id"`
+	Content      string        `json:"content"`
+	ContentType  string        `json:"content_type"`
+	ScheduledFor time.Time     `json:"scheduled_for"`
+	SentAt       sql.NullTime  `json:"sent_at"`
+	CancelledAt  sql.NullTime  `json:"cancelled_at"`
+	CreatedAt    time.Time     `json:"created_at"`
+}
+
+type SecurityEvent struct {
+	ID          int64                 `json:"id"`
+	UserID      sql.NullInt64         `json:"user_id"`
+	EventType   string                `json:"event_type"`
+	Description sql.NullString        `json:"description"`
+	IpAddress   pqtype.Inet           `json:"ip_address"`
+	UserAgent   sql.NullString        `json:"user_agent"`
+	Metadata    pqtype.NullRawMessage `json:"metadata"`
+	CreatedAt   time.Time             `json:"created_at"`
+}
+
+type UnreadMessage struct {
+	ID                int64         `json:"id"`
+	UserID            int64         `json:"user_id"`
+	WorkspaceID       int64         `json:"workspace_id"`
+	ChannelID         sql.NullInt64 `json:"channel_id"`
+	LastReadMessageID sql.NullInt64 `json:"last_read_message_id"`
+	UnreadCount       int32         `json:"unread_count"`
+	LastReadAt        time.Time     `json:"last_read_at"`
+	UpdatedAt         time.Time     `json:"updated_at"`
 }
 
 type User struct {
@@ -94,6 +231,33 @@ type User struct {
 	CreatedAt         time.Time     `json:"created_at"`
 	WorkspaceID       sql.NullInt64 `json:"workspace_id"`
 	Role              string        `json:"role"`
+	EmailVerified     bool          `json:"email_verified"`
+	EmailVerifiedAt   sql.NullTime  `json:"email_verified_at"`
+}
+
+type User2fa struct {
+	ID          int64        `json:"id"`
+	UserID      int64        `json:"user_id"`
+	Secret      string       `json:"secret"`
+	BackupCodes []string     `json:"backup_codes"`
+	Enabled     bool         `json:"enabled"`
+	VerifiedAt  sql.NullTime `json:"verified_at"`
+	CreatedAt   time.Time    `json:"created_at"`
+	UpdatedAt   time.Time    `json:"updated_at"`
+}
+
+type UserSession struct {
+	ID           int64                 `json:"id"`
+	UserID       int64                 `json:"user_id"`
+	SessionToken string                `json:"session_token"`
+	RefreshToken string                `json:"refresh_token"`
+	ExpiresAt    time.Time             `json:"expires_at"`
+	IsActive     bool                  `json:"is_active"`
+	IpAddress    pqtype.Inet           `json:"ip_address"`
+	UserAgent    sql.NullString        `json:"user_agent"`
+	DeviceInfo   pqtype.NullRawMessage `json:"device_info"`
+	CreatedAt    time.Time             `json:"created_at"`
+	LastUsedAt   time.Time             `json:"last_used_at"`
 }
 
 type UserStatus struct {

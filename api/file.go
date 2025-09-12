@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	db "github.com/heyrmi/goslack/db/sqlc"
 	"github.com/heyrmi/goslack/service"
 )
 
@@ -34,7 +35,7 @@ func (server *Server) uploadFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Parse multipart form
 	if err := ctx.Request.ParseMultipartForm(server.config.FileMaxSize); err != nil {
@@ -117,7 +118,7 @@ func (server *Server) downloadFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Get file content with permission check
 	fileContent, fileInfo, err := server.fileService.GetFileContent(fileID, user.ID)
@@ -187,7 +188,7 @@ func (server *Server) getFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Validate that user belongs to the workspace
 	if !server.userService.UserBelongsToWorkspace(user.ID, workspaceID) {
@@ -240,7 +241,7 @@ func (server *Server) listWorkspaceFiles(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Validate that user belongs to the workspace
 	if !server.userService.UserBelongsToWorkspace(user.ID, workspaceID) {
@@ -310,7 +311,7 @@ func (server *Server) deleteFile(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Delete file
 	if err := server.fileService.DeleteFile(fileID, user.ID); err != nil {
@@ -356,7 +357,7 @@ func (server *Server) getFileStats(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Validate that user belongs to the workspace
 	if !server.userService.UserBelongsToWorkspace(user.ID, workspaceID) {
@@ -409,7 +410,7 @@ func (server *Server) sendFileMessage(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(fmt.Errorf("user not found in context")))
 		return
 	}
-	user := currentUser.(service.UserResponse)
+	user := currentUser.(*db.User)
 
 	// Validate that user belongs to the workspace
 	if !server.userService.UserBelongsToWorkspace(user.ID, req.WorkspaceID) {
